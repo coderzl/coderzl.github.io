@@ -54,8 +54,6 @@
 			
 				<li><a href="/">主页</a></li>
 	        
-				<li><a href="/categories/">分类</a></li>
-	        
 				<li><a href="/archives/">归档</a></li>
 	        
 			</ul>
@@ -114,8 +112,6 @@
 			
 				
 			
-				
-			
 			
 			
 			<nav class="header-nav">
@@ -133,14 +129,12 @@
 			</nav>
 
 			<nav class="header-menu js-header-menu">
-				<ul style="width: 70%">
+				<ul style="width: 50%">
 				
 				
-					<li style="width: 33.333333333333336%"><a href="/">主页</a></li>
+					<li style="width: 50%"><a href="/">主页</a></li>
 		        
-					<li style="width: 33.333333333333336%"><a href="/categories/">分类</a></li>
-		        
-					<li style="width: 33.333333333333336%"><a href="/archives/">归档</a></li>
+					<li style="width: 50%"><a href="/archives/">归档</a></li>
 		        
 				</ul>
 			</nav>
@@ -311,7 +305,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2017/04/16/hexo/">足迹👣</a>
+      <a class="article-title" href="/2017/04/16/hexo/">Hexo + Github Pages 搭建静态博客</a>
     </h1>
   
 
@@ -324,13 +318,13 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>搭建GitHub pages博客</p>
-<h2 id="Hexo"><a href="#Hexo" class="headerlink" title="Hexo"></a>Hexo</h2><h3 id="安装Node-js"><a href="#安装Node-js" class="headerlink" title="安装Node.js"></a>安装Node.js</h3><p>URL: <a href="https://nodejs.org/en/" target="_blank" rel="external">URL</a></p>
+        <p>利用hexo和github pages搭建静态博客，主要操作步骤有：<br> 1、搭建node.js环境<br> 2、安装hexo<br> 3、用hexo初始化生成一个静态博客文件<br> 4、生成静态html页面<br> 5、本地起服务调试<br> 6、配置github仓库地址<br> 7、发布</p>
+<h3 id="安装Node-js"><a href="#安装Node-js" class="headerlink" title="安装Node.js"></a>安装Node.js</h3><p>URL: <a href="https://nodejs.org/en/" target="_blank" rel="external">下载</a></p>
 <h3 id="安装Hexo"><a href="#安装Hexo" class="headerlink" title="安装Hexo"></a>安装Hexo</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo npm install -g hexo</div></pre></td></tr></table></figure>
 <h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo init</div></pre></td></tr></table></figure>
 <p>INFO  Start blogging with Hexo! </p>
 <h3 id="生成静态页面"><a href="#生成静态页面" class="headerlink" title="生成静态页面"></a>生成静态页面</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo g</div></pre></td></tr></table></figure>
-<h3 id="启动服务"><a href="#启动服务" class="headerlink" title="启动服务"></a>启动服务</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
+<h3 id="启动服务"><a href="#启动服务" class="headerlink" title="启动服务"></a>启动服务</h3><p>hexo可以在本地调试，<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure></p>
 <h3 id="配置发布信息Github"><a href="#配置发布信息Github" class="headerlink" title="配置发布信息Github"></a>配置发布信息Github</h3><p>打开根目录_config.yml 在文件最后，修改deploy节点<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">deploy:</div><div class="line">  type: git</div><div class="line">  repository: https://github.com/yourname/yourname.github.io.git</div><div class="line">  branch: master</div></pre></td></tr></table></figure></p>
 <p>执行命令<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ npm install hexo-deployer-git --save</div></pre></td></tr></table></figure></p>
 <h3 id="发布"><a href="#发布" class="headerlink" title="发布"></a>发布</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
