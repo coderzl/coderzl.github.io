@@ -3,11 +3,9 @@
 
 
     
-    
-    
   <url>
     <loc>http://zhanglong.wiki/2017/04/16/hexo/</loc>
-    <lastmod>2017-04-19T08:30:16.000Z</lastmod>
+    <lastmod>2017-04-19T08:53:07.000Z</lastmod>
     <data>
         <display>
         <title>Hexo + Github Pages 搭建静态博客</title>
@@ -23,10 +21,9 @@
     </url>
 
     
-    
   <url>
     <loc>http://zhanglong.wiki/2017/04/16/hexo%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE/</loc>
-    <lastmod>2017-04-18T09:10:20.000Z</lastmod>
+    <lastmod>2017-04-19T08:53:04.000Z</lastmod>
     <data>
         <display>
         <title>hexo主题配置</title>
@@ -43,4 +40,7 @@
     </data>
     </url>
 
+    
+    
+    
 </urlset>
