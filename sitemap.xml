@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://zhanglong.wiki/categories/index.html</loc>
+    
+    <lastmod>2017-04-19T08:49:46.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://zhanglong.wiki/categories/index-1.html</loc>
+    
+    <lastmod>2017-04-19T08:48:29.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://zhanglong.wiki/2017/04/16/hexo/</loc>
     
     <lastmod>2017-04-19T08:30:16.000Z</lastmod>
@@ -12,13 +26,6 @@
     <loc>http://zhanglong.wiki/tags/index.html</loc>
     
     <lastmod>2017-04-19T08:27:33.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://zhanglong.wiki/categories/index.html</loc>
-    
-    <lastmod>2017-04-19T08:27:23.000Z</lastmod>
     
   </url>
   
