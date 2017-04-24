@@ -90,18 +90,18 @@
 
 
 
-<meta name="description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介 构造函数1234567public LinkedList() &amp;#123;&amp;#125;public LinkedList(Collection&amp;lt;? extends E&amp;gt; c) &amp;#123;">
+<meta name="description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介">
 <meta name="keywords" content="源码,jdk,集合">
 <meta property="og:type" content="article">
 <meta property="og:title" content="LinkedList源码笔记(1.8)">
 <meta property="og:url" content="http://zhanglong.wiki/2017/01/10/LinkedList源码笔记/index.html">
 <meta property="og:site_name" content="张龙的博客">
-<meta property="og:description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介 构造函数1234567public LinkedList() &amp;#123;&amp;#125;public LinkedList(Collection&amp;lt;? extends E&amp;gt; c) &amp;#123;">
+<meta property="og:description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介">
 <meta property="og:image" content="http://zhanglong.wiki/2017/01/10/LinkedList源码笔记/LinkedList-uml.png">
-<meta property="og:updated_time" content="2017-04-24T08:21:06.000Z">
+<meta property="og:updated_time" content="2017-04-24T08:22:12.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="LinkedList源码笔记(1.8)">
-<meta name="twitter:description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介 构造函数1234567public LinkedList() &amp;#123;&amp;#125;public LinkedList(Collection&amp;lt;? extends E&amp;gt; c) &amp;#123;">
+<meta name="twitter:description" content="LinkedList 双向链表。插入删除，最多都只需要修改三个Node，速度较快根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历） 简介">
 <meta name="twitter:image" content="http://zhanglong.wiki/2017/01/10/LinkedList源码笔记/LinkedList-uml.png">
 
 
@@ -415,6 +415,7 @@
       
         <p>LinkedList 双向链表。<br>插入删除，最多都只需要修改三个Node，速度较快<br>根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历）</p>
 <h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p><img src="/2017/01/10/LinkedList源码笔记/LinkedList-uml.png" alt="LinkedList-um-w358"></p>
+<a id="more"></a>
 <h4 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">LinkedList</span><span class="params">()</span> </span>&#123;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">LinkedList</span><span class="params">(Collection&lt;? extends E&gt; c)</span> </span>&#123;</div><div class="line">    <span class="keyword">this</span>();</div><div class="line">    addAll(c);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="属性"><a href="#属性" class="headerlink" title="属性"></a>属性</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">transient</span> <span class="keyword">int</span> size = <span class="number">0</span>; <span class="comment">//元素个数</span></div><div class="line">   </div><div class="line"><span class="keyword">transient</span> Node&lt;E&gt; first; <span class="comment">//链表头</span></div><div class="line"></div><div class="line"><span class="keyword">transient</span> Node&lt;E&gt; last; <span class="comment">//链表尾</span></div></pre></td></tr></table></figure>
 <h4 id="Node"><a href="#Node" class="headerlink" title="Node"></a>Node</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</div><div class="line">    E item;<span class="comment">//存储元素</span></div><div class="line">    Node&lt;E&gt; next;<span class="comment">//下一个</span></div><div class="line">    Node&lt;E&gt; prev;<span class="comment">//上一个</span></div><div class="line"></div><div class="line">    Node(Node&lt;E&gt; prev, E element, Node&lt;E&gt; next) &#123;</div><div class="line">        <span class="keyword">this</span>.item = element;</div><div class="line">        <span class="keyword">this</span>.next = next;</div><div class="line">        <span class="keyword">this</span>.prev = prev;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
