@@ -97,7 +97,7 @@
 <meta property="og:url" content="http://zhanglong.wiki/2017/06/12/framework/基于Mysql的Sequence实现/index.html">
 <meta property="og:site_name" content="阿拉丁的混乱笔记">
 <meta property="og:description" content="之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。  需要新写一个：  分布式场景使用 满足一定的并发要求找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，">
-<meta property="og:updated_time" content="2017-06-12T15:04:33.000Z">
+<meta property="og:updated_time" content="2017-06-12T15:07:46.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于Mysql的Sequence实现">
 <meta name="twitter:description" content="之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。  需要新写一个：  分布式场景使用 满足一定的并发要求找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，">
@@ -424,7 +424,8 @@ select t.value into current from t_sequence t where t.sequence_name = sequence_n
 return current;
 </code></pre><p>end;</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 基于java缓存实现</div><div class="line">  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。</div><div class="line">自己实现一个，java版</div><div class="line">  原理：</div><div class="line">   - 读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</div><div class="line">   - 数据库乐观锁更新，允许重试</div><div class="line">   - 读取数据从缓存中读取，用完再读取数据库</div><div class="line"></div><div class="line">  不废话，上代码：</div><div class="line">#### 表结构</div></pre></td></tr></table></figure>
-<p>CREATE TABLE <code>t_pub_sequence</code> (<br>  <code>SEQ_NAME</code> varchar(128) CHARACTER SET utf8 NOT NULL COMMENT ‘序列名称’,<br>  <code>SEQ_VALUE</code> bigint(20) NOT NULL COMMENT ‘目前序列值’,<br>  <code>MIN_VALUE</code> bigint(20) NOT NULL COMMENT ‘最小值’,<br>  <code>MAX_VALUE</code> bigint(20) NOT NULL COMMENT ‘最大值’,<br>  <code>STEP</code> bigint(20) NOT NULL COMMENT ‘每次取值的数量’,<br>  <code>TM_CREATE</code> datetime NOT NULL COMMENT ‘创建时间’,<br>  <code>TM_SMP</code> datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ‘修改时间’,<br>  PRIMARY KEY (<code>SEQ_NAME</code>)<br>) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT=’流水号生成表’;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### sequence接口</div></pre></td></tr></table></figure></p>
+<p>CREATE TABLE <code>t_pub_sequence</code> (<br>  <code>SEQ_NAME</code> varchar(128) CHARACTER SET utf8 NOT NULL COMMENT ‘序列名称’,<br>  <code>SEQ_VALUE</code> bigint(20) NOT NULL COMMENT ‘目前序列值’,<br>  <code>MIN_VALUE</code> bigint(20) NOT NULL COMMENT ‘最小值’,<br>  <code>MAX_VALUE</code> bigint(20) NOT NULL COMMENT ‘最大值’,<br>  <code>STEP</code> bigint(20) NOT NULL COMMENT ‘每次取值的数量’,<br>  <code>TM_CREATE</code> datetime NOT NULL COMMENT ‘创建时间’,<br>  <code>TM_SMP</code> datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ‘修改时间’,<br>  PRIMARY KEY (<code>SEQ_NAME</code>)<br>) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT=’流水号生成表’;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### sequence接口</div></pre></td></tr></table></figure>
 <p>/**</p>
 <ul>
 <li><p></p></li>
