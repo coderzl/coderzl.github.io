@@ -409,406 +409,26 @@
             <p>  之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。<br>这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。<br>  需要新写一个：</p>
 <ul>
 <li>分布式场景使用</li>
-<li>满足一定的并发要求<br>找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，不断update它的值。然后大部分的实现方案，都用到了函数。<br>贴一下网上的代码：<h3 id="基于mysql函数实现"><a href="#基于mysql函数实现" class="headerlink" title="基于mysql函数实现"></a>基于mysql函数实现</h3><h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `t_sequence` (</div><div class="line">`sequence_name`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT &apos;序列名称&apos; ,</div><div class="line">`value`  int(11) NULL DEFAULT NULL COMMENT &apos;当前值&apos; ,</div><div class="line">PRIMARY KEY (`sequence_name`)</div><div class="line">)</div><div class="line">ENGINE=InnoDB</div><div class="line">DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci</div><div class="line">ROW_FORMAT=COMPACT</div><div class="line">;</div><div class="line"></div><div class="line">```  </div><div class="line"></div><div class="line">#### 获取下一个值</div></pre></td></tr></table></figure>
-</li>
+<li>满足一定的并发要求<br>找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，不断update它的值。然后大部分的实现方案，都用到了函数。<br>贴一下网上的代码：<h3 id="基于mysql函数实现"><a href="#基于mysql函数实现" class="headerlink" title="基于mysql函数实现"></a>基于mysql函数实现</h3><h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4></li>
 </ul>
-<p>CREATE DEFINER = <code>root</code>@<code>localhost</code> FUNCTION <code>nextval</code>(sequence_name varchar(64))<br> RETURNS int(11)<br>BEGIN<br>    declare current integer;<br>    set current = 0;</p>
-<pre><code>update t_sequence t set t.value = t.value + 1 where t.sequence_name = sequence_name;
-select t.value into current from t_sequence t where t.sequence_name = sequence_name;
-
-return current;
-</code></pre><p>end;</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 基于java缓存实现</div><div class="line">  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。</div><div class="line">自己实现一个，java版</div><div class="line">  原理：</div><div class="line">   - 读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</div><div class="line">   - 数据库乐观锁更新，允许重试</div><div class="line">   - 读取数据从缓存中读取，用完再读取数据库</div><div class="line"></div><div class="line">  不废话，上代码：</div><div class="line">#### 表结构</div></pre></td></tr></table></figure>
-<p>CREATE TABLE <code>t_pub_sequence</code> (<br>  <code>SEQ_NAME</code> varchar(128) CHARACTER SET utf8 NOT NULL COMMENT ‘序列名称’,<br>  <code>SEQ_VALUE</code> bigint(20) NOT NULL COMMENT ‘目前序列值’,<br>  <code>MIN_VALUE</code> bigint(20) NOT NULL COMMENT ‘最小值’,<br>  <code>MAX_VALUE</code> bigint(20) NOT NULL COMMENT ‘最大值’,<br>  <code>STEP</code> bigint(20) NOT NULL COMMENT ‘每次取值的数量’,<br>  <code>TM_CREATE</code> datetime NOT NULL COMMENT ‘创建时间’,<br>  <code>TM_SMP</code> datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ‘修改时间’,<br>  PRIMARY KEY (<code>SEQ_NAME</code>)<br>) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT=’流水号生成表’;</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### sequence接口</div></pre></td></tr></table></figure>
-<p>/**</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `t_sequence` (</div><div class="line">`sequence_name`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '序列名称' ,</div><div class="line">`value`  int(11) NULL DEFAULT NULL COMMENT '当前值' ,</div><div class="line">PRIMARY KEY (`sequence_name`)</div><div class="line">)</div><div class="line">ENGINE=InnoDB</div><div class="line">DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci</div><div class="line">ROW_FORMAT=COMPACT</div><div class="line">;</div><div class="line"></div><div class="line">```  </div><div class="line"></div><div class="line">#### 获取下一个值</div><div class="line"></div><div class="line">```sql</div><div class="line">CREATE DEFINER = `root`@`localhost` FUNCTION `nextval`(sequence_name varchar(64))</div><div class="line"> RETURNS int(11)</div><div class="line">BEGIN</div><div class="line">    declare current integer;</div><div class="line">    set current = 0;</div><div class="line">    </div><div class="line">    update t_sequence t set t.value = t.value + 1 where t.sequence_name = sequence_name;</div><div class="line">    select t.value into current from t_sequence t where t.sequence_name = sequence_name;</div><div class="line"></div><div class="line">    return current;</div><div class="line">end;</div></pre></td></tr></table></figure>
+<h3 id="基于java缓存实现"><a href="#基于java缓存实现" class="headerlink" title="基于java缓存实现"></a>基于java缓存实现</h3><p>  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。<br>自己实现一个，java版<br>  原理：</p>
 <ul>
-<li><p></p></li>
-<li>@author coderzl</li>
-<li>@Title MysqlSequence</li>
-<li>@Description 基于mysql数据库实现的序列</li>
-<li>@date 2017/6/6 23:03<br><em>/<br>public interface MysqlSequence {<br> /*</em><ul>
-<li><p></p></li>
-<li>获取指定sequence的序列号</li>
-<li><p></p></li>
-<li>@param  seqName sequence名</li>
-<li>@return String 序列号<br>*/<br>public String nextVal(String seqName);<br>}</li>
+<li>读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</li>
+<li>数据库乐观锁更新，允许重试</li>
+<li><p>读取数据从缓存中读取，用完再读取数据库</p>
+<p>不废话，上代码：</p>
+<h4 id="表结构-1"><a href="#表结构-1" class="headerlink" title="表结构"></a>表结构</h4></li>
 </ul>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 序列区间</div><div class="line">（用于本地缓存一段序列）</div></pre></td></tr></table></figure>
-<p>/**</p>
-<ul>
-<li><p></p><br>*</li>
-<li>@author coderzl</li>
-<li>@Title SequenceRange</li>
-<li>@Description 序列区间，用于缓存序列</li>
-<li><p>@date 2017/6/6 22:58<br><em>/<br>@Data<br>public class SequenceRange {<br> private final long       min;<br> private final long       max;<br> /**  </em>/<br> private final AtomicLong value;<br> /<em>* 是否超限 </em>/<br> private volatile boolean over = false;</p>
-<p> /**</p>
-<ul>
-<li>构造.<br>*</li>
-<li>@param min </li>
-<li><p>@param max<br>*/<br>public SequenceRange(long min, long max) {<br> this.min = min;<br> this.max = max;<br> this.value = new AtomicLong(min);<br>}</p>
-<p>/**</p>
-</li>
-<li><p>Gets and increment</p><br>*</li>
-<li><p>@return<br>*/<br>public long getAndIncrement() {<br> long currentValue = value.getAndIncrement();<br> if (currentValue &gt; max) {</p>
-<pre><code>over = true;
-return -1;
-</code></pre><p> }</p>
-<p> return currentValue;<br>}</p>
-</li>
-</ul>
-</li>
-</ul>
-<p>}   </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### BO </div><div class="line">  对应数据库记录</div></pre></td></tr></table></figure>
-<p>@Data<br>public class MysqlSequenceBo {<br>    /**</p>
-<pre><code> * seq名
- */
-private String seqName;
-/**
- * 当前值
- */
-private Long seqValue;
-/**
- * 最小值
- */
-private Long minValue;
-/**
- * 最大值
- */
-private Long maxValue;
-/**
- * 每次取值的数量
- */
-private Long step;
-/**  */
-private Date tmCreate;
-/**  */
-private Date tmSmp;
-
-public boolean validate(){
-  //一些简单的校验。如当前值必须在最大最小值之间。step值不能大于max与min的差
-  if (StringUtil.isBlank(seqName) || minValue &lt; 0 || maxValue &lt;= 0 || step &lt;= 0 || minValue &gt;= maxValue || maxValue - minValue &lt;= step ||seqValue &lt; minValue || seqValue &gt; maxValue ) {
-        return false;
-    }
-    return true;  
-}
-</code></pre><p>}    </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO </div><div class="line">增删改查，其实就用到了改和查</div></pre></td></tr></table></figure>
-<p>public interface MysqlSequenceDAO {<br>    /**</p>
-<pre><code>* 
-*/
-public int createSequence(MysqlSequenceBo bo);
-
-public int updSequence(@Param(&quot;seqName&quot;) String seqName, @Param(&quot;oldValue&quot;) long oldValue ,@Param(&quot;newValue&quot;) long newValue);
-
-public int delSequence(@Param(&quot;seqName&quot;) String seqName);
-
-public MysqlSequenceBo getSequence(@Param(&quot;seqName&quot;) String seqName);
-
-public List&lt;MysqlSequenceBo&gt; getAll();
-</code></pre><p>}</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### Mapper</div></pre></td></tr></table></figure>
-<p>&lt;?xml version=”1.0” encoding=”UTF-8” ?&gt;<br>&lt;!DOCTYPE mapper PUBLIC “-//mybatis.org//DTD Mapper 3.0//EN” “<a href="http://mybatis.org/dtd/mybatis-3-mapper.dtd" target="_blank" rel="external">http://mybatis.org/dtd/mybatis-3-mapper.dtd</a>“ &gt;</p>
-<mapper namespace="com.xxxxx.core.sequence.impl.dao.MysqlSequenceDAO"><br>    <resultmap id="BaseResultMap" type="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        <result column="SEQ_NAME" property="seqName" jdbctype="VARCHAR"><br>        <result column="SEQ_VALUE" property="seqValue" jdbctype="BIGINT"><br>        <result column="MIN_VALUE" property="minValue" jdbctype="BIGINT"><br>        <result column="MAX_VALUE" property="maxValue" jdbctype="BIGINT"><br>        <result column="STEP" property="step" jdbctype="BIGINT"><br>        <result column="TM_CREATE" property="tmCreate" jdbctype="TIMESTAMP"><br>        <result column="TM_SMP" property="tmSmp" jdbctype="TIMESTAMP"><br>    </result></result></result></result></result></result></result></resultmap><br>    <delete id="delSequence" parametertype="java.lang.String"><br>        delete from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </delete><br>    <insert id="createSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        insert into t_pub_sequence (SEQ_NAME,SEQ_VALUE,MIN_VALUE,MAX_VALUE,STEP,TM_CREATE)<br>        values (#{seqName,jdbcType=VARCHAR}, #{seqValue,jdbcType=BIGINT},<br>        #{minValue,jdbcType=BIGINT}, #{maxValue,jdbcType=BIGINT}, #{step,jdbcType=BIGINT},<br>        now())<br>    </insert><br>    <update id="updSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        update t_pub_sequence<br>        set SEQ_VALUE = #{newValue,jdbcType=BIGINT}<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR} and SEQ_VALUE = #{oldValue,jdbcType=BIGINT}<br>    </update><br><br>    <select id="getAll" resultmap="BaseResultMap"><br>        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP<br>        from t_pub_sequence<br>    </select><br><br>    <select id="getSequence" resultmap="BaseResultMap"><br>        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP<br>        from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </select><br></mapper>
-
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 接口实现</div></pre></td></tr></table></figure>
-<p>@Repository(“mysqlSequence”)<br>public class MysqlSequenceImpl implements MysqlSequence{</p>
-<pre><code>@Autowired
-private MysqlSequenceFactory mysqlSequenceFactory;
-/**
- * &lt;p&gt;
- * 获取指定sequence的序列号
- * &lt;/p&gt;
- *
- * @param seqName sequence名
- * @return String 序列号
- * @author coderzl
- */
-@Override
-public String nextVal(String seqName) {
-    return Objects.toString(mysqlSequenceFactory.getNextVal(seqName));
-}
-</code></pre><p>}</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 工厂</div></pre></td></tr></table></figure>
-<p>@Component<br>public class MysqlSequenceFactory {</p>
-<pre><code>private final Lock lock = new ReentrantLock();
-
-/**  */
-private Map&lt;String,MysqlSequenceHolder&gt; holderMap = new ConcurrentHashMap&lt;&gt;();
-
-@Autowired
-private MysqlSequenceDAO msqlSequenceDAO;
-/** 单个sequence初始化乐观锁更新失败重试次数 */
-@Value(&quot;${seq.init.retry:5}&quot;)
-private int initRetryNum;
-/** 单个sequence更新序列区间乐观锁更新失败重试次数 */
-@Value(&quot;${seq.get.retry:20}&quot;)
-private int getRetryNum;
-
-@PostConstruct
-private void init(){
-    //初始化所有sequence
-    initAll();
-}
-
-
-/**
- * &lt;p&gt; 加载表中所有sequence，完成初始化 &lt;/p&gt;
- * @return void
- * @author coderzl
- */
-private void initAll(){
-    try {
-        lock.lock();
-        List&lt;MysqlSequenceBo&gt; boList = msqlSequenceDAO.getAll();
-        if (boList == null) {
-            throw new IllegalArgumentException(&quot;The sequenceRecord is null!&quot;);
-        }
-        for (MysqlSequenceBo bo : boList) {
-            MysqlSequenceHolder holder = new MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);
-            holder.init();
-            holderMap.put(bo.getSeqName(), holder);
-        }
-    }finally {
-        lock.unlock();
-    }
-}
-
-
-/**
- * &lt;p&gt;  &lt;/p&gt;
- * @param seqName
- * @return long
- * @author coderzl
- */
-public long getNextVal(String seqName){
-    MysqlSequenceHolder holder = holderMap.get(seqName);
-    if (holder == null) {
-        try {
-            lock.lock();
-            holder = holderMap.get(seqName);
-            if (holder != null){
-                return holder.getNextVal();
-            }
-            MysqlSequenceBo bo = msqlSequenceDAO.getSequence(seqName);
-            holder = new MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);
-            holder.init();
-            holderMap.put(seqName, holder);
-        }finally {
-           lock.unlock();
-        }
-    }
-    return holder.getNextVal();
-}
-</code></pre><p>}</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">####</div></pre></td></tr></table></figure>
-<p>public class MysqlSequenceHolder {</p>
-<pre><code>private final Lock lock                = new ReentrantLock();
-
-/** seqName */
-private String seqName;
-
-/** sequenceDao */
-private MysqlSequenceDAO sequenceDAO;
-
-private MysqlSequenceBo sequenceBo;
-/**  */
-private SequenceRange sequenceRange;
-/** 是否初始化 */
-private volatile boolean       isInitialize      = false;
-/** sequence初始化重试次数 */
-private int initRetryNum;
-/** sequence获取重试次数 */
-private int getRetryNum;
-
-/**
- * &lt;p&gt; 构造方法 &lt;/p&gt;
- * @Title MysqlSequenceHolder
- * @param sequenceDAO 
- * @param sequenceBo
- * @param initRetryNum 初始化时，数据库更新失败后重试次数
- * @param getRetryNum 获取nextVal时，数据库更新失败后重试次数
- * @return
- * @author coderzl
- */
-public MysqlSequenceHolder(MysqlSequenceDAO sequenceDAO, MysqlSequenceBo sequenceBo,int initRetryNum,int getRetryNum) {
-    this.sequenceDAO = sequenceDAO;
-    this.sequenceBo = sequenceBo;
-    this.initRetryNum = initRetryNum;
-    this.getRetryNum = getRetryNum;
-    if(sequenceBo != null)
-        this.seqName = sequenceBo.getSeqName();
-}
-
-/**
- * &lt;p&gt; 初始化 &lt;/p&gt;
- * @Title init
- * @Description
- * @param
- * @return void
- * @author coderzl
- */
-public void init(){
-    if (isInitialize == true) {
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the MysqlSequenceHolder has inited&quot;);
-    }
-    if (sequenceDAO == null) {
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceDao is null&quot;);
-    }
-    if (seqName == null || seqName.trim().length() == 0) {
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceName is null&quot;);
-    }
-    if (sequenceBo == null) {
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceBo is null&quot;);
-    }
-    if (!sequenceBo.validate()){
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceBo validate fail. BO:&quot;+sequenceBo);
-    }
-    // 初始化该sequence
-    try {
-        initSequenceRecord(sequenceBo);
-    } catch (SequenceException e) {
-        throw e;
-    }
-    isInitialize = true;
-}
-
-/**
- * &lt;p&gt; 获取下一个序列号 &lt;/p&gt;
- * @Title getNextVal
- * @param
- * @return long
- * @author coderzl
- */
-public long getNextVal(){
-    if(isInitialize == false){
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the MysqlSequenceHolder not inited&quot;);
-    }
-    if(sequenceRange == null){
-        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceRange is null&quot;);
-    }
-    long curValue = sequenceRange.getAndIncrement();
-
-    if(curValue == -1){
-        try{
-            lock.lock();
-            curValue = sequenceRange.getAndIncrement();
-            if(curValue != -1){
-                return curValue;
-            }
-            sequenceRange = retryRange();
-            curValue = sequenceRange.getAndIncrement();
-        }finally {
-            lock.unlock();
-        }
-    }
-    return curValue;
-}
-
-/**
- * &lt;p&gt; 初始化当前这条记录 &lt;/p&gt;
- * @Title initSequenceRecord
- * @Description
- * @param sequenceBo
- * @return void
- * @date  2017/6/11 15:53
- * @author coderzl
- */
-private void initSequenceRecord(MysqlSequenceBo sequenceBo){
-    for(int i = 1; i &lt; initRetryNum; i++){
-        //查询bo
-        MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());
-        if(curBo == null){
-            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo is null&quot;);
-        }
-        if (!curBo.validate()){
-            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo validate fail&quot;);
-        }
-        //改变当前值
-        long newValue = curBo.getSeqValue()+curBo.getStep();
-        //检查当前值
-        if(!checkCurrentValue(newValue,curBo)){
-            newValue = resetCurrentValue(curBo);
-        }
-        int result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);
-        if(result &gt; 0){
-            sequenceRange = new SequenceRange(curBo.getSeqValue(),newValue - 1);
-            curBo.setSeqValue(newValue);
-            this.sequenceBo = curBo;
-            return;
-        }else{
-            continue;
-        }
-    }
-    throw new SequenceException(&quot;[&quot; + seqName + &quot;]  sequenceBo update error&quot;);
-}
-
-/**
- * &lt;p&gt; 检查新值是否合法 &lt;/p&gt;
- * @Title checkCurrentValue
- * @param curValue
- * @param curBo
- * @return boolean
- * @author coderzl
- */
-private boolean checkCurrentValue(long curValue,MysqlSequenceBo curBo){
-    if(curValue &gt; curBo.getMinValue() &amp;&amp; curValue &lt;= curBo.getMaxValue()){
-        return true;
-    }
-    return false;
-}
-
-/**
- * &lt;p&gt; 重置sequence当前值 ：当前sequence达到最大值时，重新从最小值开始 &lt;/p&gt;
- * @Title resetCurrentValue
- * @param curBo
- * @return long
- * @author coderzl
- */
-private long resetCurrentValue(MysqlSequenceBo curBo){
-    return curBo.getMinValue();
-}
-
-/**
- * &lt;p&gt; 缓存区间使用完毕时，重新读取数据库记录，缓存新序列段 &lt;/p&gt;
- * @Title retryRange
- * @param SequenceRange
- * @author coderzl
- */
-private SequenceRange retryRange(){
-    for(int i = 1; i &lt; getRetryNum; i++){
-        //查询bo
-        MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());
-        if(curBo == null){
-            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo is null&quot;);
-        }
-        if (!curBo.validate()){
-            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo validate fail&quot;);
-        }
-        //改变当前值
-        long newValue = curBo.getSeqValue()+curBo.getStep();
-        //检查当前值
-        if(!checkCurrentValue(newValue,curBo)){
-            newValue = resetCurrentValue(curBo);
-        }
-        int result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);
-        if(result &gt; 0){
-            sequenceRange = new SequenceRange(curBo.getSeqValue(),newValue - 1);
-            curBo.setSeqValue(newValue);
-            this.sequenceBo = curBo;
-            return sequenceRange;
-        }else{
-            continue;
-        }
-    }
-    throw new SequenceException(&quot;[&quot; + seqName + &quot;]  sequenceBo update error&quot;);
-
-}
-</code></pre><p>}</p>
-<p>```</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`t_pub_sequence`</span> (</div><div class="line">  <span class="string">`SEQ_NAME`</span> <span class="built_in">varchar</span>(<span class="number">128</span>) <span class="built_in">CHARACTER</span> <span class="keyword">SET</span> utf8 <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'序列名称'</span>,</div><div class="line">  <span class="string">`SEQ_VALUE`</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'目前序列值'</span>,</div><div class="line">  <span class="string">`MIN_VALUE`</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'最小值'</span>,</div><div class="line">  <span class="string">`MAX_VALUE`</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'最大值'</span>,</div><div class="line">  <span class="string">`STEP`</span> <span class="built_in">bigint</span>(<span class="number">20</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'每次取值的数量'</span>,</div><div class="line">  <span class="string">`TM_CREATE`</span> datetime <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">COMMENT</span> <span class="string">'创建时间'</span>,</div><div class="line">  <span class="string">`TM_SMP`</span> datetime <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="keyword">CURRENT_TIMESTAMP</span> <span class="keyword">ON</span> <span class="keyword">UPDATE</span> <span class="keyword">CURRENT_TIMESTAMP</span> <span class="keyword">COMMENT</span> <span class="string">'修改时间'</span>,</div><div class="line">  PRIMARY <span class="keyword">KEY</span> (<span class="string">`SEQ_NAME`</span>)</div><div class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8mb4 <span class="keyword">COMMENT</span>=<span class="string">'流水号生成表'</span>;</div></pre></td></tr></table></figure>
+<h4 id="sequence接口"><a href="#sequence接口" class="headerlink" title="sequence接口"></a>sequence接口</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * &lt;p&gt;&lt;/p&gt;</div><div class="line"> * <span class="doctag">@author</span> coderzl</div><div class="line"> * <span class="doctag">@Title</span> MysqlSequence</div><div class="line"> * <span class="doctag">@Description</span> 基于mysql数据库实现的序列</div><div class="line"> * <span class="doctag">@date</span> 2017/6/6 23:03</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">MysqlSequence</span> </span>&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt;</div><div class="line">     * 获取指定sequence的序列号</div><div class="line">     * &lt;/p&gt;</div><div class="line">     * <span class="doctag">@param</span>  seqName sequence名</div><div class="line">     * <span class="doctag">@return</span> String 序列号</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">nextVal</span><span class="params">(String seqName)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="序列区间"><a href="#序列区间" class="headerlink" title="序列区间"></a>序列区间</h4><p>（用于本地缓存一段序列）<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * &lt;p&gt;&lt;/p&gt;</div><div class="line"> *</div><div class="line"> * <span class="doctag">@author</span> coderzl</div><div class="line"> * <span class="doctag">@Title</span> SequenceRange</div><div class="line"> * <span class="doctag">@Description</span> 序列区间，用于缓存序列</div><div class="line"> * <span class="doctag">@date</span> 2017/6/6 22:58</div><div class="line"> */</div><div class="line"> <span class="meta">@Data</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SequenceRange</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span>       min;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span>       max;</div><div class="line">    <span class="comment">/**  */</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> AtomicLong value;</div><div class="line">    <span class="comment">/** 是否超限 */</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span> over = <span class="keyword">false</span>;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 构造.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> min </div><div class="line">     * <span class="doctag">@param</span> max </div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">SequenceRange</span><span class="params">(<span class="keyword">long</span> min, <span class="keyword">long</span> max)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.min = min;</div><div class="line">        <span class="keyword">this</span>.max = max;</div><div class="line">        <span class="keyword">this</span>.value = <span class="keyword">new</span> AtomicLong(min);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt;Gets and increment&lt;/p&gt;</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> </div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">getAndIncrement</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">long</span> currentValue = value.getAndIncrement();</div><div class="line">        <span class="keyword">if</span> (currentValue &gt; max) &#123;</div><div class="line">            over = <span class="keyword">true</span>;</div><div class="line">            <span class="keyword">return</span> -<span class="number">1</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">return</span> currentValue;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="BO"><a href="#BO" class="headerlink" title="BO"></a>BO</h4><p>  对应数据库记录<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Data</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlSequenceBo</span> </span>&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * seq名</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> String seqName;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 当前值</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> Long seqValue;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 最小值</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> Long minValue;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 最大值</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> Long maxValue;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 每次取值的数量</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> Long step;</div><div class="line">    <span class="comment">/**  */</span></div><div class="line">    <span class="keyword">private</span> Date tmCreate;</div><div class="line">    <span class="comment">/**  */</span></div><div class="line">    <span class="keyword">private</span> Date tmSmp;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">validate</span><span class="params">()</span></span>&#123;</div><div class="line">      <span class="comment">//一些简单的校验。如当前值必须在最大最小值之间。step值不能大于max与min的差</span></div><div class="line">      <span class="keyword">if</span> (StringUtil.isBlank(seqName) || minValue &lt; <span class="number">0</span> || maxValue &lt;= <span class="number">0</span> || step &lt;= <span class="number">0</span> || minValue &gt;= maxValue || maxValue - minValue &lt;= step ||seqValue &lt; minValue || seqValue &gt; maxValue ) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;  </div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="DAO"><a href="#DAO" class="headerlink" title="DAO"></a>DAO</h4><p>增删改查，其实就用到了改和查<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">MysqlSequenceDAO</span> </span>&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">    * </div><div class="line">    */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">createSequence</span><span class="params">(MysqlSequenceBo bo)</span></span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">updSequence</span><span class="params">(@Param(<span class="string">"seqName"</span>)</span> String seqName, @<span class="title">Param</span><span class="params">(<span class="string">"oldValue"</span>)</span> <span class="keyword">long</span> oldValue ,@<span class="title">Param</span><span class="params">(<span class="string">"newValue"</span>)</span> <span class="keyword">long</span> newValue)</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">delSequence</span><span class="params">(@Param(<span class="string">"seqName"</span>)</span> String seqName)</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> MysqlSequenceBo <span class="title">getSequence</span><span class="params">(@Param(<span class="string">"seqName"</span>)</span> String seqName)</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> List&lt;MysqlSequenceBo&gt; <span class="title">getAll</span><span class="params">()</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="Mapper"><a href="#Mapper" class="headerlink" title="Mapper"></a>Mapper</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</div><div class="line"><span class="meta">&lt;!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" &gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">mapper</span> <span class="attr">namespace</span>=<span class="string">"com.xxxxx.core.sequence.impl.dao.MysqlSequenceDAO"</span> &gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">resultMap</span> <span class="attr">id</span>=<span class="string">"BaseResultMap"</span> <span class="attr">type</span>=<span class="string">"com.xxxxx.core.sequence.impl.MysqlSequenceBo"</span> &gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"SEQ_NAME"</span> <span class="attr">property</span>=<span class="string">"seqName"</span> <span class="attr">jdbcType</span>=<span class="string">"VARCHAR"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"SEQ_VALUE"</span> <span class="attr">property</span>=<span class="string">"seqValue"</span> <span class="attr">jdbcType</span>=<span class="string">"BIGINT"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"MIN_VALUE"</span> <span class="attr">property</span>=<span class="string">"minValue"</span> <span class="attr">jdbcType</span>=<span class="string">"BIGINT"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"MAX_VALUE"</span> <span class="attr">property</span>=<span class="string">"maxValue"</span> <span class="attr">jdbcType</span>=<span class="string">"BIGINT"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"STEP"</span> <span class="attr">property</span>=<span class="string">"step"</span> <span class="attr">jdbcType</span>=<span class="string">"BIGINT"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"TM_CREATE"</span> <span class="attr">property</span>=<span class="string">"tmCreate"</span> <span class="attr">jdbcType</span>=<span class="string">"TIMESTAMP"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">"TM_SMP"</span> <span class="attr">property</span>=<span class="string">"tmSmp"</span> <span class="attr">jdbcType</span>=<span class="string">"TIMESTAMP"</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">resultMap</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">delete</span> <span class="attr">id</span>=<span class="string">"delSequence"</span> <span class="attr">parameterType</span>=<span class="string">"java.lang.String"</span> &gt;</span></div><div class="line">        delete from t_pub_sequence</div><div class="line">        where SEQ_NAME = #&#123;seqName,jdbcType=VARCHAR&#125;</div><div class="line">    <span class="tag">&lt;/<span class="name">delete</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">insert</span> <span class="attr">id</span>=<span class="string">"createSequence"</span> <span class="attr">parameterType</span>=<span class="string">"com.xxxxx.core.sequence.impl.MysqlSequenceBo"</span> &gt;</span></div><div class="line">        insert into t_pub_sequence (SEQ_NAME,SEQ_VALUE,MIN_VALUE,MAX_VALUE,STEP,TM_CREATE)</div><div class="line">        values (#&#123;seqName,jdbcType=VARCHAR&#125;, #&#123;seqValue,jdbcType=BIGINT&#125;,</div><div class="line">        #&#123;minValue,jdbcType=BIGINT&#125;, #&#123;maxValue,jdbcType=BIGINT&#125;, #&#123;step,jdbcType=BIGINT&#125;,</div><div class="line">        now())</div><div class="line">    <span class="tag">&lt;/<span class="name">insert</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">update</span> <span class="attr">id</span>=<span class="string">"updSequence"</span> <span class="attr">parameterType</span>=<span class="string">"com.xxxxx.core.sequence.impl.MysqlSequenceBo"</span> &gt;</span></div><div class="line">        update t_pub_sequence</div><div class="line">        set SEQ_VALUE = #&#123;newValue,jdbcType=BIGINT&#125;</div><div class="line">        where SEQ_NAME = #&#123;seqName,jdbcType=VARCHAR&#125; and SEQ_VALUE = #&#123;oldValue,jdbcType=BIGINT&#125;</div><div class="line">    <span class="tag">&lt;/<span class="name">update</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">"getAll"</span> <span class="attr">resultMap</span>=<span class="string">"BaseResultMap"</span> &gt;</span></div><div class="line">        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP</div><div class="line">        from t_pub_sequence</div><div class="line">    <span class="tag">&lt;/<span class="name">select</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">"getSequence"</span> <span class="attr">resultMap</span>=<span class="string">"BaseResultMap"</span> &gt;</span></div><div class="line">        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP</div><div class="line">        from t_pub_sequence</div><div class="line">        where SEQ_NAME = #&#123;seqName,jdbcType=VARCHAR&#125;</div><div class="line">    <span class="tag">&lt;/<span class="name">select</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">mapper</span>&gt;</span></div></pre></td></tr></table></figure>
+<h4 id="接口实现"><a href="#接口实现" class="headerlink" title="接口实现"></a>接口实现</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Repository</span>(<span class="string">"mysqlSequence"</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlSequenceImpl</span> <span class="keyword">implements</span> <span class="title">MysqlSequence</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Autowired</span></div><div class="line">    <span class="keyword">private</span> MysqlSequenceFactory mysqlSequenceFactory;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt;</div><div class="line">     * 获取指定sequence的序列号</div><div class="line">     * &lt;/p&gt;</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> seqName sequence名</div><div class="line">     * <span class="doctag">@return</span> String 序列号</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">nextVal</span><span class="params">(String seqName)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> Objects.toString(mysqlSequenceFactory.getNextVal(seqName));</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="工厂"><a href="#工厂" class="headerlink" title="工厂"></a>工厂</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Component</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlSequenceFactory</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Lock lock = <span class="keyword">new</span> ReentrantLock();</div><div class="line"></div><div class="line">    <span class="comment">/**  */</span></div><div class="line">    <span class="keyword">private</span> Map&lt;String,MysqlSequenceHolder&gt; holderMap = <span class="keyword">new</span> ConcurrentHashMap&lt;&gt;();</div><div class="line"></div><div class="line">    <span class="meta">@Autowired</span></div><div class="line">    <span class="keyword">private</span> MysqlSequenceDAO msqlSequenceDAO;</div><div class="line">    <span class="comment">/** 单个sequence初始化乐观锁更新失败重试次数 */</span></div><div class="line">    <span class="meta">@Value</span>(<span class="string">"$&#123;seq.init.retry:5&#125;"</span>)</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> initRetryNum;</div><div class="line">    <span class="comment">/** 单个sequence更新序列区间乐观锁更新失败重试次数 */</span></div><div class="line">    <span class="meta">@Value</span>(<span class="string">"$&#123;seq.get.retry:20&#125;"</span>)</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> getRetryNum;</div><div class="line"></div><div class="line">    <span class="meta">@PostConstruct</span></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="comment">//初始化所有sequence</span></div><div class="line">        initAll();</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 加载表中所有sequence，完成初始化 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initAll</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            lock.lock();</div><div class="line">            List&lt;MysqlSequenceBo&gt; boList = msqlSequenceDAO.getAll();</div><div class="line">            <span class="keyword">if</span> (boList == <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"The sequenceRecord is null!"</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">for</span> (MysqlSequenceBo bo : boList) &#123;</div><div class="line">                MysqlSequenceHolder holder = <span class="keyword">new</span> MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);</div><div class="line">                holder.init();</div><div class="line">                holderMap.put(bo.getSeqName(), holder);</div><div class="line">            &#125;</div><div class="line">        &#125;<span class="keyword">finally</span> &#123;</div><div class="line">            lock.unlock();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt;  &lt;/p&gt;</div><div class="line">     * <span class="doctag">@param</span> seqName</div><div class="line">     * <span class="doctag">@return</span> long</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">getNextVal</span><span class="params">(String seqName)</span></span>&#123;</div><div class="line">        MysqlSequenceHolder holder = holderMap.get(seqName);</div><div class="line">        <span class="keyword">if</span> (holder == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                lock.lock();</div><div class="line">                holder = holderMap.get(seqName);</div><div class="line">                <span class="keyword">if</span> (holder != <span class="keyword">null</span>)&#123;</div><div class="line">                    <span class="keyword">return</span> holder.getNextVal();</div><div class="line">                &#125;</div><div class="line">                MysqlSequenceBo bo = msqlSequenceDAO.getSequence(seqName);</div><div class="line">                holder = <span class="keyword">new</span> MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);</div><div class="line">                holder.init();</div><div class="line">                holderMap.put(seqName, holder);</div><div class="line">            &#125;<span class="keyword">finally</span> &#123;</div><div class="line">               lock.unlock();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> holder.getNextVal();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>####<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlSequenceHolder</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Lock lock                = <span class="keyword">new</span> ReentrantLock();</div><div class="line"></div><div class="line">    <span class="comment">/** seqName */</span></div><div class="line">    <span class="keyword">private</span> String seqName;</div><div class="line"></div><div class="line">    <span class="comment">/** sequenceDao */</span></div><div class="line">    <span class="keyword">private</span> MysqlSequenceDAO sequenceDAO;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> MysqlSequenceBo sequenceBo;</div><div class="line">    <span class="comment">/**  */</span></div><div class="line">    <span class="keyword">private</span> SequenceRange sequenceRange;</div><div class="line">    <span class="comment">/** 是否初始化 */</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span>       isInitialize      = <span class="keyword">false</span>;</div><div class="line">    <span class="comment">/** sequence初始化重试次数 */</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> initRetryNum;</div><div class="line">    <span class="comment">/** sequence获取重试次数 */</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> getRetryNum;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 构造方法 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> MysqlSequenceHolder</div><div class="line">     * <span class="doctag">@param</span> sequenceDAO </div><div class="line">     * <span class="doctag">@param</span> sequenceBo</div><div class="line">     * <span class="doctag">@param</span> initRetryNum 初始化时，数据库更新失败后重试次数</div><div class="line">     * <span class="doctag">@param</span> getRetryNum 获取nextVal时，数据库更新失败后重试次数</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MysqlSequenceHolder</span><span class="params">(MysqlSequenceDAO sequenceDAO, MysqlSequenceBo sequenceBo,<span class="keyword">int</span> initRetryNum,<span class="keyword">int</span> getRetryNum)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.sequenceDAO = sequenceDAO;</div><div class="line">        <span class="keyword">this</span>.sequenceBo = sequenceBo;</div><div class="line">        <span class="keyword">this</span>.initRetryNum = initRetryNum;</div><div class="line">        <span class="keyword">this</span>.getRetryNum = getRetryNum;</div><div class="line">        <span class="keyword">if</span>(sequenceBo != <span class="keyword">null</span>)</div><div class="line">            <span class="keyword">this</span>.seqName = sequenceBo.getSeqName();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 初始化 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> init</div><div class="line">     * <span class="doctag">@Description</span></div><div class="line">     * <span class="doctag">@param</span></div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">if</span> (isInitialize == <span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the MysqlSequenceHolder has inited"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (sequenceDAO == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the sequenceDao is null"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (seqName == <span class="keyword">null</span> || seqName.trim().length() == <span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the sequenceName is null"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (sequenceBo == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the sequenceBo is null"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (!sequenceBo.validate())&#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the sequenceBo validate fail. BO:"</span>+sequenceBo);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 初始化该sequence</span></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            initSequenceRecord(sequenceBo);</div><div class="line">        &#125; <span class="keyword">catch</span> (SequenceException e) &#123;</div><div class="line">            <span class="keyword">throw</span> e;</div><div class="line">        &#125;</div><div class="line">        isInitialize = <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 获取下一个序列号 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> getNextVal</div><div class="line">     * <span class="doctag">@param</span></div><div class="line">     * <span class="doctag">@return</span> long</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">getNextVal</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">if</span>(isInitialize == <span class="keyword">false</span>)&#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the MysqlSequenceHolder not inited"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(sequenceRange == <span class="keyword">null</span>)&#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the sequenceRange is null"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">long</span> curValue = sequenceRange.getAndIncrement();</div><div class="line"></div><div class="line">        <span class="keyword">if</span>(curValue == -<span class="number">1</span>)&#123;</div><div class="line">            <span class="keyword">try</span>&#123;</div><div class="line">                lock.lock();</div><div class="line">                curValue = sequenceRange.getAndIncrement();</div><div class="line">                <span class="keyword">if</span>(curValue != -<span class="number">1</span>)&#123;</div><div class="line">                    <span class="keyword">return</span> curValue;</div><div class="line">                &#125;</div><div class="line">                sequenceRange = retryRange();</div><div class="line">                curValue = sequenceRange.getAndIncrement();</div><div class="line">            &#125;<span class="keyword">finally</span> &#123;</div><div class="line">                lock.unlock();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> curValue;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 初始化当前这条记录 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> initSequenceRecord</div><div class="line">     * <span class="doctag">@Description</span></div><div class="line">     * <span class="doctag">@param</span> sequenceBo</div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     * <span class="doctag">@date</span>  2017/6/11 15:53</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initSequenceRecord</span><span class="params">(MysqlSequenceBo sequenceBo)</span></span>&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; initRetryNum; i++)&#123;</div><div class="line">            <span class="comment">//查询bo</span></div><div class="line">            MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());</div><div class="line">            <span class="keyword">if</span>(curBo == <span class="keyword">null</span>)&#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the current sequenceBo is null"</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (!curBo.validate())&#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the current sequenceBo validate fail"</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="comment">//改变当前值</span></div><div class="line">            <span class="keyword">long</span> newValue = curBo.getSeqValue()+curBo.getStep();</div><div class="line">            <span class="comment">//检查当前值</span></div><div class="line">            <span class="keyword">if</span>(!checkCurrentValue(newValue,curBo))&#123;</div><div class="line">                newValue = resetCurrentValue(curBo);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">int</span> result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);</div><div class="line">            <span class="keyword">if</span>(result &gt; <span class="number">0</span>)&#123;</div><div class="line">                sequenceRange = <span class="keyword">new</span> SequenceRange(curBo.getSeqValue(),newValue - <span class="number">1</span>);</div><div class="line">                curBo.setSeqValue(newValue);</div><div class="line">                <span class="keyword">this</span>.sequenceBo = curBo;</div><div class="line">                <span class="keyword">return</span>;</div><div class="line">            &#125;<span class="keyword">else</span>&#123;</div><div class="line">                <span class="keyword">continue</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"]  sequenceBo update error"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 检查新值是否合法 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> checkCurrentValue</div><div class="line">     * <span class="doctag">@param</span> curValue</div><div class="line">     * <span class="doctag">@param</span> curBo</div><div class="line">     * <span class="doctag">@return</span> boolean</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">checkCurrentValue</span><span class="params">(<span class="keyword">long</span> curValue,MysqlSequenceBo curBo)</span></span>&#123;</div><div class="line">        <span class="keyword">if</span>(curValue &gt; curBo.getMinValue() &amp;&amp; curValue &lt;= curBo.getMaxValue())&#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 重置sequence当前值 ：当前sequence达到最大值时，重新从最小值开始 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> resetCurrentValue</div><div class="line">     * <span class="doctag">@param</span> curBo</div><div class="line">     * <span class="doctag">@return</span> long</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">resetCurrentValue</span><span class="params">(MysqlSequenceBo curBo)</span></span>&#123;</div><div class="line">        <span class="keyword">return</span> curBo.getMinValue();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * &lt;p&gt; 缓存区间使用完毕时，重新读取数据库记录，缓存新序列段 &lt;/p&gt;</div><div class="line">     * <span class="doctag">@Title</span> retryRange</div><div class="line">     * <span class="doctag">@param</span> SequenceRange</div><div class="line">     * <span class="doctag">@author</span> coderzl</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> SequenceRange <span class="title">retryRange</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; getRetryNum; i++)&#123;</div><div class="line">            <span class="comment">//查询bo</span></div><div class="line">            MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());</div><div class="line">            <span class="keyword">if</span>(curBo == <span class="keyword">null</span>)&#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the current sequenceBo is null"</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (!curBo.validate())&#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"] the current sequenceBo validate fail"</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="comment">//改变当前值</span></div><div class="line">            <span class="keyword">long</span> newValue = curBo.getSeqValue()+curBo.getStep();</div><div class="line">            <span class="comment">//检查当前值</span></div><div class="line">            <span class="keyword">if</span>(!checkCurrentValue(newValue,curBo))&#123;</div><div class="line">                newValue = resetCurrentValue(curBo);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">int</span> result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);</div><div class="line">            <span class="keyword">if</span>(result &gt; <span class="number">0</span>)&#123;</div><div class="line">                sequenceRange = <span class="keyword">new</span> SequenceRange(curBo.getSeqValue(),newValue - <span class="number">1</span>);</div><div class="line">                curBo.setSeqValue(newValue);</div><div class="line">                <span class="keyword">this</span>.sequenceBo = curBo;</div><div class="line">                <span class="keyword">return</span> sequenceRange;</div><div class="line">            &#125;<span class="keyword">else</span>&#123;</div><div class="line">                <span class="keyword">continue</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> SequenceException(<span class="string">"["</span> + seqName + <span class="string">"]  sequenceBo update error"</span>);</div><div class="line"></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 
           
         
@@ -1292,154 +912,6 @@ private SequenceRange retryRange(){
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
-                  hexo主题配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
-                2017-04-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/hexo/" itemprop="url" rel="index">
-                    <span itemprop="name">hexo</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
-<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1544,6 +1016,154 @@ private SequenceRange retryRange(){
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2017/04/16/hexo/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
+                  hexo主题配置
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
+                2017-04-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
+<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1887,154 +1507,6 @@ private SequenceRange retryRange(){
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/01/10/jdk/LinkedList源码笔记/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/01/10/jdk/LinkedList源码笔记/" itemprop="url">
-                  LinkedList源码笔记(1.8)
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-10T00:00:00+08:00">
-                2017-01-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JDK源码笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">JDK源码笔记</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>LinkedList 双向链表。<br>插入删除，最多都只需要修改三个Node，速度较快<br>根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历）</p>
-<h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p><img src="/2017/01/10/jdk/LinkedList源码笔记/LinkedList-uml.png" alt="LinkedList-um-w358"></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/01/10/jdk/LinkedList源码笔记/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/01/10/jdk/ArrayList源码笔记/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2144,6 +1616,154 @@ private SequenceRange retryRange(){
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2017/01/10/jdk/ArrayList源码笔记/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/01/10/jdk/LinkedList源码笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/10/jdk/LinkedList源码笔记/" itemprop="url">
+                  LinkedList源码笔记(1.8)
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-10T00:00:00+08:00">
+                2017-01-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JDK源码笔记/" itemprop="url" rel="index">
+                    <span itemprop="name">JDK源码笔记</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>LinkedList 双向链表。<br>插入删除，最多都只需要修改三个Node，速度较快<br>根据index查询，最多需要遍历半个链表（node(int index) 方法会判断从头遍历还是从尾遍历）</p>
+<h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p><img src="/2017/01/10/jdk/LinkedList源码笔记/LinkedList-uml.png" alt="LinkedList-um-w358"></p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/01/10/jdk/LinkedList源码笔记/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
