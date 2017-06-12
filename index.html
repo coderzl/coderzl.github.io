@@ -409,7 +409,7 @@
             <p>  之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。<br>这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。<br>  需要新写一个：</p>
 <ul>
 <li>分布式场景使用</li>
-<li>满足一定的并发要求<br>找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，不断update它的值。然后大部分的实现方案，都用到了函数。<br>贴一下网上的代码：<h3 id="基于mysql函数实现"><a href="#基于mysql函数实现" class="headerlink" title="基于mysql函数实现"></a>基于mysql函数实现</h3><h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `t_sequence` (</div><div class="line">`sequence_name`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT &apos;序列名称&apos; ,</div><div class="line">`value`  int(11) NULL DEFAULT NULL COMMENT &apos;当前值&apos; ,</div><div class="line">PRIMARY KEY (`sequence_name`)</div><div class="line">)</div><div class="line">ENGINE=InnoDB</div><div class="line">DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci</div><div class="line">ROW_FORMAT=COMPACT</div><div class="line">;</div><div class="line">```  </div><div class="line"></div><div class="line">#### 获取下一个值</div></pre></td></tr></table></figure>
+<li>满足一定的并发要求<br>找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，不断update它的值。然后大部分的实现方案，都用到了函数。<br>贴一下网上的代码：<h3 id="基于mysql函数实现"><a href="#基于mysql函数实现" class="headerlink" title="基于mysql函数实现"></a>基于mysql函数实现</h3><h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `t_sequence` (</div><div class="line">`sequence_name`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT &apos;序列名称&apos; ,</div><div class="line">`value`  int(11) NULL DEFAULT NULL COMMENT &apos;当前值&apos; ,</div><div class="line">PRIMARY KEY (`sequence_name`)</div><div class="line">)</div><div class="line">ENGINE=InnoDB</div><div class="line">DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci</div><div class="line">ROW_FORMAT=COMPACT</div><div class="line">;</div><div class="line"></div><div class="line">```  </div><div class="line"></div><div class="line">#### 获取下一个值</div></pre></td></tr></table></figure>
 </li>
 </ul>
 <p>CREATE DEFINER = <code>root</code>@<code>localhost</code> FUNCTION <code>nextval</code>(sequence_name varchar(64))<br> RETURNS int(11)<br>BEGIN<br>    declare current integer;<br>    set current = 0;</p>
@@ -417,7 +417,8 @@
 select t.value into current from t_sequence t where t.sequence_name = sequence_name;
 
 return current;
-</code></pre><p>end;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 基于java缓存实现</div><div class="line">  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。</div><div class="line">自己实现一个，java版</div><div class="line">  原理：</div><div class="line">   - 读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</div><div class="line">   - 数据库乐观锁更新，允许重试</div><div class="line">   - 读取数据从缓存中读取，用完再读取数据库</div><div class="line"></div><div class="line">  不废话，上代码：</div><div class="line">#### 表结构</div></pre></td></tr></table></figure></p>
+</code></pre><p>end;</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 基于java缓存实现</div><div class="line">  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。</div><div class="line">自己实现一个，java版</div><div class="line">  原理：</div><div class="line">   - 读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</div><div class="line">   - 数据库乐观锁更新，允许重试</div><div class="line">   - 读取数据从缓存中读取，用完再读取数据库</div><div class="line"></div><div class="line">  不废话，上代码：</div><div class="line">#### 表结构</div></pre></td></tr></table></figure>
 <p>CREATE TABLE <code>t_pub_sequence</code> (<br>  <code>SEQ_NAME</code> varchar(128) CHARACTER SET utf8 NOT NULL COMMENT ‘序列名称’,<br>  <code>SEQ_VALUE</code> bigint(20) NOT NULL COMMENT ‘目前序列值’,<br>  <code>MIN_VALUE</code> bigint(20) NOT NULL COMMENT ‘最小值’,<br>  <code>MAX_VALUE</code> bigint(20) NOT NULL COMMENT ‘最大值’,<br>  <code>STEP</code> bigint(20) NOT NULL COMMENT ‘每次取值的数量’,<br>  <code>TM_CREATE</code> datetime NOT NULL COMMENT ‘创建时间’,<br>  <code>TM_SMP</code> datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ‘修改时间’,<br>  PRIMARY KEY (<code>SEQ_NAME</code>)<br>) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT=’流水号生成表’;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### sequence接口</div></pre></td></tr></table></figure></p>
 <p>/**</p>
 <ul>
@@ -430,11 +431,11 @@ return current;
 <li>获取指定sequence的序列号</li>
 <li><p></p></li>
 <li>@param  seqName sequence名</li>
-<li>@return String 序列号<br>*/<br>public String nextVal(String seqName);<br>}<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 序列区间</div><div class="line">（用于本地缓存一段序列）</div></pre></td></tr></table></figure>
-</li>
+<li>@return String 序列号<br>*/<br>public String nextVal(String seqName);<br>}</li>
 </ul>
 </li>
 </ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 序列区间</div><div class="line">（用于本地缓存一段序列）</div></pre></td></tr></table></figure>
 <p>/**</p>
 <ul>
 <li><p></p><br>*</li>
@@ -459,7 +460,8 @@ return -1;
 </ul>
 </li>
 </ul>
-<p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### BO </div><div class="line">  对应数据库记录</div></pre></td></tr></table></figure></p>
+<p>}   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### BO </div><div class="line">  对应数据库记录</div></pre></td></tr></table></figure>
 <p>@Data<br>public class MysqlSequenceBo {<br>    /**</p>
 <pre><code> * seq名
  */
@@ -492,7 +494,8 @@ public boolean validate(){
     }
     return true;  
 }
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO </div><div class="line">增删改查，其实就用到了改和查</div></pre></td></tr></table></figure></p>
+</code></pre><p>}    </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO </div><div class="line">增删改查，其实就用到了改和查</div></pre></td></tr></table></figure>
 <p>public interface MysqlSequenceDAO {<br>    /**</p>
 <pre><code>* 
 */
@@ -505,29 +508,12 @@ public int delSequence(@Param(&quot;seqName&quot;) String seqName);
 public MysqlSequenceBo getSequence(@Param(&quot;seqName&quot;) String seqName);
 
 public List&lt;MysqlSequenceBo&gt; getAll();
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### Mapper</div></pre></td></tr></table></figure></p>
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### Mapper</div></pre></td></tr></table></figure>
 <p>&lt;?xml version=”1.0” encoding=”UTF-8” ?&gt;<br>&lt;!DOCTYPE mapper PUBLIC “-//mybatis.org//DTD Mapper 3.0//EN” “<a href="http://mybatis.org/dtd/mybatis-3-mapper.dtd" target="_blank" rel="external">http://mybatis.org/dtd/mybatis-3-mapper.dtd</a>“ &gt;</p>
-<p><mapper namespace="com.xxxxx.core.sequence.impl.dao.MysqlSequenceDAO"><br>    <resultmap id="BaseResultMap" type="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        <result column="SEQ_NAME" property="seqName" jdbctype="VARCHAR"><br>        <result column="SEQ_VALUE" property="seqValue" jdbctype="BIGINT"><br>        <result column="MIN_VALUE" property="minValue" jdbctype="BIGINT"><br>        <result column="MAX_VALUE" property="maxValue" jdbctype="BIGINT"><br>        <result column="STEP" property="step" jdbctype="BIGINT"><br>        <result column="TM_CREATE" property="tmCreate" jdbctype="TIMESTAMP"><br>        <result column="TM_SMP" property="tmSmp" jdbctype="TIMESTAMP"><br>    </result></result></result></result></result></result></result></resultmap><br>    <delete id="delSequence" parametertype="java.lang.String"><br>        delete from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </delete><br>    <insert id="createSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        insert into t_pub_sequence (SEQ_NAME,SEQ_VALUE,MIN_VALUE,MAX_VALUE,STEP,TM_CREATE)<br>        values (#{seqName,jdbcType=VARCHAR}, #{seqValue,jdbcType=BIGINT},</insert></mapper></p>
-<pre><code>    #{minValue,jdbcType=BIGINT}, #{maxValue,jdbcType=BIGINT}, #{step,jdbcType=BIGINT},
-    now())
-&lt;/insert&gt;
-&lt;update id=&quot;updSequence&quot; parameterType=&quot;com.xxxxx.core.sequence.impl.MysqlSequenceBo&quot; &gt;
-    update t_pub_sequence
-    set SEQ_VALUE = #{newValue,jdbcType=BIGINT}
-    where SEQ_NAME = #{seqName,jdbcType=VARCHAR} and SEQ_VALUE = #{oldValue,jdbcType=BIGINT}
-&lt;/update&gt;
+<mapper namespace="com.xxxxx.core.sequence.impl.dao.MysqlSequenceDAO"><br>    <resultmap id="BaseResultMap" type="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        <result column="SEQ_NAME" property="seqName" jdbctype="VARCHAR"><br>        <result column="SEQ_VALUE" property="seqValue" jdbctype="BIGINT"><br>        <result column="MIN_VALUE" property="minValue" jdbctype="BIGINT"><br>        <result column="MAX_VALUE" property="maxValue" jdbctype="BIGINT"><br>        <result column="STEP" property="step" jdbctype="BIGINT"><br>        <result column="TM_CREATE" property="tmCreate" jdbctype="TIMESTAMP"><br>        <result column="TM_SMP" property="tmSmp" jdbctype="TIMESTAMP"><br>    </result></result></result></result></result></result></result></resultmap><br>    <delete id="delSequence" parametertype="java.lang.String"><br>        delete from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </delete><br>    <insert id="createSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        insert into t_pub_sequence (SEQ_NAME,SEQ_VALUE,MIN_VALUE,MAX_VALUE,STEP,TM_CREATE)<br>        values (#{seqName,jdbcType=VARCHAR}, #{seqValue,jdbcType=BIGINT},<br>        #{minValue,jdbcType=BIGINT}, #{maxValue,jdbcType=BIGINT}, #{step,jdbcType=BIGINT},<br>        now())<br>    </insert><br>    <update id="updSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        update t_pub_sequence<br>        set SEQ_VALUE = #{newValue,jdbcType=BIGINT}<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR} and SEQ_VALUE = #{oldValue,jdbcType=BIGINT}<br>    </update><br><br>    <select id="getAll" resultmap="BaseResultMap"><br>        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP<br>        from t_pub_sequence<br>    </select><br><br>    <select id="getSequence" resultmap="BaseResultMap"><br>        select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP<br>        from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </select><br></mapper>
 
-&lt;select id=&quot;getAll&quot; resultMap=&quot;BaseResultMap&quot; &gt;
-    select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP
-    from t_pub_sequence
-&lt;/select&gt;
-
-&lt;select id=&quot;getSequence&quot; resultMap=&quot;BaseResultMap&quot; &gt;
-    select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP
-    from t_pub_sequence
-    where SEQ_NAME = #{seqName,jdbcType=VARCHAR}
-&lt;/select&gt;
-</code></pre><p><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 接口实现</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 接口实现</div></pre></td></tr></table></figure>
 <p>@Repository(“mysqlSequence”)<br>public class MysqlSequenceImpl implements MysqlSequence{</p>
 <pre><code>@Autowired
 private MysqlSequenceFactory mysqlSequenceFactory;
@@ -544,7 +530,8 @@ private MysqlSequenceFactory mysqlSequenceFactory;
 public String nextVal(String seqName) {
     return Objects.toString(mysqlSequenceFactory.getNextVal(seqName));
 }
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 工厂</div></pre></td></tr></table></figure></p>
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 工厂</div></pre></td></tr></table></figure>
 <p>@Component<br>public class MysqlSequenceFactory {</p>
 <pre><code>private final Lock lock = new ReentrantLock();
 
@@ -615,7 +602,8 @@ public long getNextVal(String seqName){
     }
     return holder.getNextVal();
 }
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">####</div></pre></td></tr></table></figure></p>
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">####</div></pre></td></tr></table></figure>
 <p>public class MysqlSequenceHolder {</p>
 <pre><code>private final Lock lock                = new ReentrantLock();
 
@@ -1303,154 +1291,6 @@ private SequenceRange retryRange(){
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
-                  hexo主题配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
-                2017-04-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/hexo/" itemprop="url" rel="index">
-                    <span itemprop="name">hexo</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
-<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1555,6 +1395,154 @@ private SequenceRange retryRange(){
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2017/04/16/hexo/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
+                  hexo主题配置
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
+                2017-04-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
+<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
