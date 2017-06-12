@@ -97,7 +97,7 @@
 <meta property="og:url" content="http://zhanglong.wiki/2017/06/12/framework/基于Mysql的Sequence实现/index.html">
 <meta property="og:site_name" content="阿拉丁的混乱笔记">
 <meta property="og:description" content="之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。  需要新写一个：  分布式场景使用 满足一定的并发要求找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，">
-<meta property="og:updated_time" content="2017-06-12T14:48:41.000Z">
+<meta property="og:updated_time" content="2017-06-12T15:02:06.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于Mysql的Sequence实现">
 <meta name="twitter:description" content="之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。  需要新写一个：  分布式场景使用 满足一定的并发要求找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，">
@@ -497,7 +497,7 @@ public boolean validate(){
     }
     return true;  
 }
-</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO</div></pre></td></tr></table></figure></p>
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO </div><div class="line">增删改查，其实就用到了改和查</div></pre></td></tr></table></figure></p>
 <p>public interface MysqlSequenceDAO {<br>    /**</p>
 <pre><code>* 
 */
@@ -510,7 +510,321 @@ public int delSequence(@Param(&quot;seqName&quot;) String seqName);
 public MysqlSequenceBo getSequence(@Param(&quot;seqName&quot;) String seqName);
 
 public List&lt;MysqlSequenceBo&gt; getAll();
-</code></pre><p>}<br>```</p>
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### Mapper</div></pre></td></tr></table></figure></p>
+<p>&lt;?xml version=”1.0” encoding=”UTF-8” ?&gt;<br>&lt;!DOCTYPE mapper PUBLIC “-//mybatis.org//DTD Mapper 3.0//EN” “<a href="http://mybatis.org/dtd/mybatis-3-mapper.dtd" target="_blank" rel="external">http://mybatis.org/dtd/mybatis-3-mapper.dtd</a>“ &gt;</p>
+<p><mapper namespace="com.xxxxx.core.sequence.impl.dao.MysqlSequenceDAO"><br>    <resultmap id="BaseResultMap" type="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        <result column="SEQ_NAME" property="seqName" jdbctype="VARCHAR"><br>        <result column="SEQ_VALUE" property="seqValue" jdbctype="BIGINT"><br>        <result column="MIN_VALUE" property="minValue" jdbctype="BIGINT"><br>        <result column="MAX_VALUE" property="maxValue" jdbctype="BIGINT"><br>        <result column="STEP" property="step" jdbctype="BIGINT"><br>        <result column="TM_CREATE" property="tmCreate" jdbctype="TIMESTAMP"><br>        <result column="TM_SMP" property="tmSmp" jdbctype="TIMESTAMP"><br>    </result></result></result></result></result></result></result></resultmap><br>    <delete id="delSequence" parametertype="java.lang.String"><br>        delete from t_pub_sequence<br>        where SEQ_NAME = #{seqName,jdbcType=VARCHAR}<br>    </delete><br>    <insert id="createSequence" parametertype="com.xxxxx.core.sequence.impl.MysqlSequenceBo"><br>        insert into t_pub_sequence (SEQ_NAME,SEQ_VALUE,MIN_VALUE,MAX_VALUE,STEP,TM_CREATE)<br>        values (#{seqName,jdbcType=VARCHAR}, #{seqValue,jdbcType=BIGINT},</insert></mapper></p>
+<pre><code>    #{minValue,jdbcType=BIGINT}, #{maxValue,jdbcType=BIGINT}, #{step,jdbcType=BIGINT},
+    now())
+&lt;/insert&gt;
+&lt;update id=&quot;updSequence&quot; parameterType=&quot;com.xxxxx.core.sequence.impl.MysqlSequenceBo&quot; &gt;
+    update t_pub_sequence
+    set SEQ_VALUE = #{newValue,jdbcType=BIGINT}
+    where SEQ_NAME = #{seqName,jdbcType=VARCHAR} and SEQ_VALUE = #{oldValue,jdbcType=BIGINT}
+&lt;/update&gt;
+
+&lt;select id=&quot;getAll&quot; resultMap=&quot;BaseResultMap&quot; &gt;
+    select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP
+    from t_pub_sequence
+&lt;/select&gt;
+
+&lt;select id=&quot;getSequence&quot; resultMap=&quot;BaseResultMap&quot; &gt;
+    select SEQ_NAME, SEQ_VALUE, MIN_VALUE, MAX_VALUE, STEP
+    from t_pub_sequence
+    where SEQ_NAME = #{seqName,jdbcType=VARCHAR}
+&lt;/select&gt;
+</code></pre><p><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 接口实现</div></pre></td></tr></table></figure></p>
+<p>@Repository(“mysqlSequence”)<br>public class MysqlSequenceImpl implements MysqlSequence{</p>
+<pre><code>@Autowired
+private MysqlSequenceFactory mysqlSequenceFactory;
+/**
+ * &lt;p&gt;
+ * 获取指定sequence的序列号
+ * &lt;/p&gt;
+ *
+ * @param seqName sequence名
+ * @return String 序列号
+ * @author coderzl
+ */
+@Override
+public String nextVal(String seqName) {
+    return Objects.toString(mysqlSequenceFactory.getNextVal(seqName));
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 工厂</div></pre></td></tr></table></figure></p>
+<p>@Component<br>public class MysqlSequenceFactory {</p>
+<pre><code>private final Lock lock = new ReentrantLock();
+
+/**  */
+private Map&lt;String,MysqlSequenceHolder&gt; holderMap = new ConcurrentHashMap&lt;&gt;();
+
+@Autowired
+private MysqlSequenceDAO msqlSequenceDAO;
+/** 单个sequence初始化乐观锁更新失败重试次数 */
+@Value(&quot;${seq.init.retry:5}&quot;)
+private int initRetryNum;
+/** 单个sequence更新序列区间乐观锁更新失败重试次数 */
+@Value(&quot;${seq.get.retry:20}&quot;)
+private int getRetryNum;
+
+@PostConstruct
+private void init(){
+    //初始化所有sequence
+    initAll();
+}
+
+
+/**
+ * &lt;p&gt; 加载表中所有sequence，完成初始化 &lt;/p&gt;
+ * @return void
+ * @author coderzl
+ */
+private void initAll(){
+    try {
+        lock.lock();
+        List&lt;MysqlSequenceBo&gt; boList = msqlSequenceDAO.getAll();
+        if (boList == null) {
+            throw new IllegalArgumentException(&quot;The sequenceRecord is null!&quot;);
+        }
+        for (MysqlSequenceBo bo : boList) {
+            MysqlSequenceHolder holder = new MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);
+            holder.init();
+            holderMap.put(bo.getSeqName(), holder);
+        }
+    }finally {
+        lock.unlock();
+    }
+}
+
+
+/**
+ * &lt;p&gt;  &lt;/p&gt;
+ * @param seqName
+ * @return long
+ * @author coderzl
+ */
+public long getNextVal(String seqName){
+    MysqlSequenceHolder holder = holderMap.get(seqName);
+    if (holder == null) {
+        try {
+            lock.lock();
+            holder = holderMap.get(seqName);
+            if (holder != null){
+                return holder.getNextVal();
+            }
+            MysqlSequenceBo bo = msqlSequenceDAO.getSequence(seqName);
+            holder = new MysqlSequenceHolder(msqlSequenceDAO, bo,initRetryNum,getRetryNum);
+            holder.init();
+            holderMap.put(seqName, holder);
+        }finally {
+           lock.unlock();
+        }
+    }
+    return holder.getNextVal();
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">####</div></pre></td></tr></table></figure></p>
+<p>public class MysqlSequenceHolder {</p>
+<pre><code>private final Lock lock                = new ReentrantLock();
+
+/** seqName */
+private String seqName;
+
+/** sequenceDao */
+private MysqlSequenceDAO sequenceDAO;
+
+private MysqlSequenceBo sequenceBo;
+/**  */
+private SequenceRange sequenceRange;
+/** 是否初始化 */
+private volatile boolean       isInitialize      = false;
+/** sequence初始化重试次数 */
+private int initRetryNum;
+/** sequence获取重试次数 */
+private int getRetryNum;
+
+/**
+ * &lt;p&gt; 构造方法 &lt;/p&gt;
+ * @Title MysqlSequenceHolder
+ * @param sequenceDAO 
+ * @param sequenceBo
+ * @param initRetryNum 初始化时，数据库更新失败后重试次数
+ * @param getRetryNum 获取nextVal时，数据库更新失败后重试次数
+ * @return
+ * @author coderzl
+ */
+public MysqlSequenceHolder(MysqlSequenceDAO sequenceDAO, MysqlSequenceBo sequenceBo,int initRetryNum,int getRetryNum) {
+    this.sequenceDAO = sequenceDAO;
+    this.sequenceBo = sequenceBo;
+    this.initRetryNum = initRetryNum;
+    this.getRetryNum = getRetryNum;
+    if(sequenceBo != null)
+        this.seqName = sequenceBo.getSeqName();
+}
+
+/**
+ * &lt;p&gt; 初始化 &lt;/p&gt;
+ * @Title init
+ * @Description
+ * @param
+ * @return void
+ * @author coderzl
+ */
+public void init(){
+    if (isInitialize == true) {
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the MysqlSequenceHolder has inited&quot;);
+    }
+    if (sequenceDAO == null) {
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceDao is null&quot;);
+    }
+    if (seqName == null || seqName.trim().length() == 0) {
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceName is null&quot;);
+    }
+    if (sequenceBo == null) {
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceBo is null&quot;);
+    }
+    if (!sequenceBo.validate()){
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceBo validate fail. BO:&quot;+sequenceBo);
+    }
+    // 初始化该sequence
+    try {
+        initSequenceRecord(sequenceBo);
+    } catch (SequenceException e) {
+        throw e;
+    }
+    isInitialize = true;
+}
+
+/**
+ * &lt;p&gt; 获取下一个序列号 &lt;/p&gt;
+ * @Title getNextVal
+ * @param
+ * @return long
+ * @author coderzl
+ */
+public long getNextVal(){
+    if(isInitialize == false){
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the MysqlSequenceHolder not inited&quot;);
+    }
+    if(sequenceRange == null){
+        throw new SequenceException(&quot;[&quot; + seqName + &quot;] the sequenceRange is null&quot;);
+    }
+    long curValue = sequenceRange.getAndIncrement();
+
+    if(curValue == -1){
+        try{
+            lock.lock();
+            curValue = sequenceRange.getAndIncrement();
+            if(curValue != -1){
+                return curValue;
+            }
+            sequenceRange = retryRange();
+            curValue = sequenceRange.getAndIncrement();
+        }finally {
+            lock.unlock();
+        }
+    }
+    return curValue;
+}
+
+/**
+ * &lt;p&gt; 初始化当前这条记录 &lt;/p&gt;
+ * @Title initSequenceRecord
+ * @Description
+ * @param sequenceBo
+ * @return void
+ * @date  2017/6/11 15:53
+ * @author coderzl
+ */
+private void initSequenceRecord(MysqlSequenceBo sequenceBo){
+    for(int i = 1; i &lt; initRetryNum; i++){
+        //查询bo
+        MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());
+        if(curBo == null){
+            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo is null&quot;);
+        }
+        if (!curBo.validate()){
+            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo validate fail&quot;);
+        }
+        //改变当前值
+        long newValue = curBo.getSeqValue()+curBo.getStep();
+        //检查当前值
+        if(!checkCurrentValue(newValue,curBo)){
+            newValue = resetCurrentValue(curBo);
+        }
+        int result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);
+        if(result &gt; 0){
+            sequenceRange = new SequenceRange(curBo.getSeqValue(),newValue - 1);
+            curBo.setSeqValue(newValue);
+            this.sequenceBo = curBo;
+            return;
+        }else{
+            continue;
+        }
+    }
+    throw new SequenceException(&quot;[&quot; + seqName + &quot;]  sequenceBo update error&quot;);
+}
+
+/**
+ * &lt;p&gt; 检查新值是否合法 &lt;/p&gt;
+ * @Title checkCurrentValue
+ * @param curValue
+ * @param curBo
+ * @return boolean
+ * @author coderzl
+ */
+private boolean checkCurrentValue(long curValue,MysqlSequenceBo curBo){
+    if(curValue &gt; curBo.getMinValue() &amp;&amp; curValue &lt;= curBo.getMaxValue()){
+        return true;
+    }
+    return false;
+}
+
+/**
+ * &lt;p&gt; 重置sequence当前值 ：当前sequence达到最大值时，重新从最小值开始 &lt;/p&gt;
+ * @Title resetCurrentValue
+ * @param curBo
+ * @return long
+ * @author coderzl
+ */
+private long resetCurrentValue(MysqlSequenceBo curBo){
+    return curBo.getMinValue();
+}
+
+/**
+ * &lt;p&gt; 缓存区间使用完毕时，重新读取数据库记录，缓存新序列段 &lt;/p&gt;
+ * @Title retryRange
+ * @param SequenceRange
+ * @author coderzl
+ */
+private SequenceRange retryRange(){
+    for(int i = 1; i &lt; getRetryNum; i++){
+        //查询bo
+        MysqlSequenceBo curBo = sequenceDAO.getSequence(sequenceBo.getSeqName());
+        if(curBo == null){
+            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo is null&quot;);
+        }
+        if (!curBo.validate()){
+            throw new SequenceException(&quot;[&quot; + seqName + &quot;] the current sequenceBo validate fail&quot;);
+        }
+        //改变当前值
+        long newValue = curBo.getSeqValue()+curBo.getStep();
+        //检查当前值
+        if(!checkCurrentValue(newValue,curBo)){
+            newValue = resetCurrentValue(curBo);
+        }
+        int result = sequenceDAO.updSequence(sequenceBo.getSeqName(),curBo.getSeqValue(),newValue);
+        if(result &gt; 0){
+            sequenceRange = new SequenceRange(curBo.getSeqValue(),newValue - 1);
+            curBo.setSeqValue(newValue);
+            this.sequenceBo = curBo;
+            return sequenceRange;
+        }else{
+            continue;
+        }
+    }
+    throw new SequenceException(&quot;[&quot; + seqName + &quot;]  sequenceBo update error&quot;);
+
+}
+</code></pre><p>}</p>
+<p>```</p>
 
       
     </div>
