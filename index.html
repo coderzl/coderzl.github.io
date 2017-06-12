@@ -307,6 +307,248 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/12/framework/基于Mysql的Sequence实现/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/06/12/framework/基于Mysql的Sequence实现/" itemprop="url">
+                  基于Mysql的Sequence实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-12T00:00:00+08:00">
+                2017-06-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/framework/" itemprop="url" rel="index">
+                    <span itemprop="name">framework</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>  之前有提到过，团队更换新框架。新的业务全部使用新的框架，甚至是新的数据库–Mysql。<br>这边之前一直是使用oracle，各种订单号、流水号、批次号啥的，都是直接使用oracle的sequence提供的数字序列号。现在数据库更换成Mysql了，显然以前的老方法不能适用了。<br>  需要新写一个：</p>
+<ul>
+<li>分布式场景使用</li>
+<li>满足一定的并发要求<br>找了一些相关的资料，发现mysql这方面的实现，原理都是一条数据库记录，不断update它的值。然后大部分的实现方案，都用到了函数。<br>贴一下网上的代码：<h3 id="基于mysql函数实现"><a href="#基于mysql函数实现" class="headerlink" title="基于mysql函数实现"></a>基于mysql函数实现</h3><h4 id="表结构"><a href="#表结构" class="headerlink" title="表结构"></a>表结构</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `t_sequence` (</div><div class="line">`sequence_name`  varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT &apos;序列名称&apos; ,</div><div class="line">`value`  int(11) NULL DEFAULT NULL COMMENT &apos;当前值&apos; ,</div><div class="line">PRIMARY KEY (`sequence_name`)</div><div class="line">)</div><div class="line">ENGINE=InnoDB</div><div class="line">DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci</div><div class="line">ROW_FORMAT=COMPACT</div><div class="line">;</div><div class="line">```  </div><div class="line"></div><div class="line">#### 获取下一个值</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>CREATE DEFINER = <code>root</code>@<code>localhost</code> FUNCTION <code>nextval</code>(sequence_name varchar(64))<br> RETURNS int(11)<br>BEGIN<br>    declare current integer;<br>    set current = 0;</p>
+<pre><code>update t_sequence t set t.value = t.value + 1 where t.sequence_name = sequence_name;
+select t.value into current from t_sequence t where t.sequence_name = sequence_name;
+
+return current;
+</code></pre><p>end;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 基于java缓存实现</div><div class="line">  并发场景有可能会出问题吧，虽然可以在业务层加锁，但分布式场景就无法保证了，然后效率应该也不会高。</div><div class="line">自己实现一个，java版</div><div class="line">  原理：</div><div class="line">   - 读取一条记录，缓存一个数据段，如：0-100，将记录的当前值从0修改为100</div><div class="line">   - 数据库乐观锁更新，允许重试</div><div class="line">   - 读取数据从缓存中读取，用完再读取数据库</div><div class="line"></div><div class="line">  不废话，上代码：</div><div class="line">#### 表结构</div></pre></td></tr></table></figure></p>
+<p>CREATE TABLE <code>t_pub_sequence</code> (<br>  <code>SEQ_NAME</code> varchar(128) CHARACTER SET utf8 NOT NULL COMMENT ‘序列名称’,<br>  <code>SEQ_VALUE</code> bigint(20) NOT NULL COMMENT ‘目前序列值’,<br>  <code>MIN_VALUE</code> bigint(20) NOT NULL COMMENT ‘最小值’,<br>  <code>MAX_VALUE</code> bigint(20) NOT NULL COMMENT ‘最大值’,<br>  <code>STEP</code> bigint(20) NOT NULL COMMENT ‘每次取值的数量’,<br>  <code>TM_CREATE</code> datetime NOT NULL COMMENT ‘创建时间’,<br>  <code>TM_SMP</code> datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT ‘修改时间’,<br>  PRIMARY KEY (<code>SEQ_NAME</code>)<br>) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT=’流水号生成表’;<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### sequence接口</div></pre></td></tr></table></figure></p>
+<p>/**</p>
+<ul>
+<li><p></p></li>
+<li>@author coderzl</li>
+<li>@Title MysqlSequence</li>
+<li>@Description 基于mysql数据库实现的序列</li>
+<li>@date 2017/6/6 23:03<br><em>/<br>public interface MysqlSequence {<br> /*</em><ul>
+<li><p></p></li>
+<li>获取指定sequence的序列号</li>
+<li><p></p></li>
+<li>@param  seqName sequence名</li>
+<li>@return String 序列号<br>*/<br>public String nextVal(String seqName);<br>}<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 序列区间</div><div class="line">（用于本地缓存一段序列）</div></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<p>/**</p>
+<ul>
+<li><p></p><br>*</li>
+<li>@author coderzl</li>
+<li>@Title SequenceRange</li>
+<li>@Description 序列区间，用于缓存序列</li>
+<li><p>@date 2017/6/6 22:58<br><em>/<br>@Data<br>public class SequenceRange {<br> private final long       min;<br> private final long       max;<br> /**  </em>/<br> private final AtomicLong value;<br> /<em>* 是否超限 </em>/<br> private volatile boolean over = false;</p>
+<p> /**</p>
+<ul>
+<li>构造.<br>*</li>
+<li>@param min </li>
+<li><p>@param max<br>*/<br>public SequenceRange(long min, long max) {<br> this.min = min;<br> this.max = max;<br> this.value = new AtomicLong(min);<br>}</p>
+<p>/**</p>
+</li>
+<li><p>Gets and increment</p><br>*</li>
+<li><p>@return<br>*/<br>public long getAndIncrement() {<br> long currentValue = value.getAndIncrement();<br> if (currentValue &gt; max) {</p>
+<pre><code>over = true;
+return -1;
+</code></pre><p> }</p>
+<p> return currentValue;<br>}</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### BO </div><div class="line">  对应数据库记录</div></pre></td></tr></table></figure></p>
+<p>@Data<br>public class MysqlSequenceBo {<br>    /**</p>
+<pre><code> * seq名
+ */
+private String seqName;
+/**
+ * 当前值
+ */
+private Long seqValue;
+/**
+ * 最小值
+ */
+private Long minValue;
+/**
+ * 最大值
+ */
+private Long maxValue;
+/**
+ * 每次取值的数量
+ */
+private Long step;
+/**  */
+private Date tmCreate;
+/**  */
+private Date tmSmp;
+
+public boolean validate(){
+  //一些简单的校验。如当前值必须在最大最小值之间。step值不能大于max与min的差
+  if (StringUtil.isBlank(seqName) || minValue &lt; 0 || maxValue &lt;= 0 || step &lt;= 0 || minValue &gt;= maxValue || maxValue - minValue &lt;= step ||seqValue &lt; minValue || seqValue &gt; maxValue ) {
+        return false;
+    }
+    return true;  
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### DAO</div></pre></td></tr></table></figure></p>
+<p>public interface MysqlSequenceDAO {<br>    /**</p>
+<pre><code>* 
+*/
+public int createSequence(MysqlSequenceBo bo);
+
+public int updSequence(@Param(&quot;seqName&quot;) String seqName, @Param(&quot;oldValue&quot;) long oldValue ,@Param(&quot;newValue&quot;) long newValue);
+
+public int delSequence(@Param(&quot;seqName&quot;) String seqName);
+
+public MysqlSequenceBo getSequence(@Param(&quot;seqName&quot;) String seqName);
+
+public List&lt;MysqlSequenceBo&gt; getAll();
+</code></pre><p>}<br>```</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -330,7 +572,7 @@
               
                 
                 <a class="post-title-link" href="/2017/06/04/framework/Spring多数据源配置/" itemprop="url">
-                  Spring多数据源配置
+                  Spring多数据源配置（未完成）
                 </a>
               
             
@@ -1680,7 +1922,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1702,7 +1944,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
