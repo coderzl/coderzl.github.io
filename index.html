@@ -405,42 +405,16 @@
 
       
         
-          
-            <p>  最近有个项目需要一个类似于SpringMvc 的URL路径映射逻辑，根据请求URL，寻找匹配的Mapping，只是这边并不是真实的Mapping，而是自定义的数据库存储记录。要求支持模板模式和Ant风格。<br>如：<br>  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">请求地址： </div><div class="line">    /hello/world</div><div class="line"></div><div class="line">数据库存储记录：</div><div class="line">    /&#123;a&#125;/&#123;b&#125;</div><div class="line">    /hello/&#123;b&#125;</div><div class="line">    /hello/world</div><div class="line">    ……</div></pre></td></tr></table></figure></p>
+          <p>  最近有个项目需要一个类似于SpringMvc 的URL路径映射逻辑，根据请求URL，寻找匹配的Mapping，只是这边并不是真实的Mapping，而是自定义的数据库存储记录。要求支持模板模式和Ant风格。<br>如：<br>  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">请求地址： </div><div class="line">    /hello/world</div><div class="line"></div><div class="line">数据库存储记录：</div><div class="line">    /&#123;a&#125;/&#123;b&#125;</div><div class="line">    /hello/&#123;b&#125;</div><div class="line">    /hello/world</div><div class="line">    ……</div></pre></td></tr></table></figure></p>
 <p>希望跟真实springMvc请求一样，获取到最佳匹配记录，张开涛的博客里称之为“最长匹配优先”。</p>
 <p>既然和SpringMvc一致，那就借鉴一下啦，现将借鉴结果记录一下：</p>
-<h3 id="SpringMvc-Mapping寻址流程"><a href="#SpringMvc-Mapping寻址流程" class="headerlink" title="SpringMvc Mapping寻址流程"></a>SpringMvc Mapping寻址流程</h3><ol>
-<li><p>将URL与所有Mapping集合，遍历匹配[匹配逻辑则是我需要找的匹配方式]</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">AbstractHandlerMethodMapping  <span class="number">382</span><span class="function">h</span></div><div class="line"></div><div class="line">	<span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addMatchingMappings</span><span class="params">(Collection&lt;T&gt; mappings, List&lt;Match&gt; matches, HttpServletRequest request)</span> &#123;</div><div class="line">		<span class="keyword">for</span> (T mapping : mappings) &#123;</div><div class="line">			T match = getMatchingMapping(mapping, request);</div><div class="line">			<span class="keyword">if</span> (match != <span class="keyword">null</span>) &#123;</div><div class="line">				matches.add(<span class="keyword">new</span> Match(match, <span class="keyword">this</span>.mappingRegistry.getMappings().get(mapping)));</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
-</li>
-<li><p>将匹配结果集合，进行排序[排序规则就是我所需要的‘最长匹配优先’]</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">AbstractHandlerMethodMapping  <span class="number">355</span>h  </div><div class="line"></div><div class="line">……</div><div class="line"><span class="function"><span class="keyword">protected</span> HandlerMethod <span class="title">lookupHandlerMethod</span><span class="params">(String lookupPath, HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">  ……</div><div class="line"><span class="keyword">if</span> (!matches.isEmpty()) &#123;</div><div class="line">			Comparator&lt;Match&gt; comparator = <span class="keyword">new</span> MatchComparator(getMappingComparator(request));</div><div class="line">			Collections.sort(matches, comparator);</div><div class="line">      ……</div></pre></td></tr></table></figure>
-</li>
-<li><p>获取第一个节点，作为bestMacth</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">   Comparator&lt;Match&gt; comparator = <span class="keyword">new</span> MatchComparator(getMappingComparator(request));</div><div class="line">     Collections.sort(matches, comparator);</div><div class="line">     <span class="keyword">if</span> (logger.isTraceEnabled()) &#123;</div><div class="line">       logger.trace(<span class="string">"Found "</span> + matches.size() + <span class="string">" matching mapping(s) for ["</span> +</div><div class="line">           lookupPath + <span class="string">"] : "</span> + matches);</div><div class="line">     &#125;</div><div class="line">Match bestMatch = matches.get(<span class="number">0</span>);</div></pre></td></tr></table></figure>
-</li>
-<li><p>若集合匹配集合大于1，则选择第二个节点，作为secondBestMatch，并与bestMatch比较，若相等，则异常</p>
-</li>
-</ol>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ol>
-<li><p>匹配逻辑主要由AntPathMatcher实现</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">PathMatcher matcher = <span class="keyword">new</span> AntPathMatcher();</div><div class="line"><span class="keyword">boolean</span> result = matcher.match(patternPath, requestPath);</div></pre></td></tr></table></figure>
-</li>
-<li><p>获取最佳匹配结果‘最长匹配优先’，由RequestMappingInfo实现</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(RequestMappingInfo other, HttpServletRequest request)</span> </span>&#123;</div><div class="line">	<span class="keyword">int</span> result;</div><div class="line">	<span class="comment">// Automatic vs explicit HTTP HEAD mapping</span></div><div class="line">	<span class="keyword">if</span> (HttpMethod.HEAD.matches(request.getMethod())) &#123;</div><div class="line">		result = <span class="keyword">this</span>.methodsCondition.compareTo(other.getMethodsCondition(), request);</div><div class="line">		<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">			<span class="keyword">return</span> result;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.patternsCondition.compareTo(other.getPatternsCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.paramsCondition.compareTo(other.getParamsCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.headersCondition.compareTo(other.getHeadersCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.consumesCondition.compareTo(other.getConsumesCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.producesCondition.compareTo(other.getProducesCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	<span class="comment">// Implicit (no method) vs explicit HTTP method mappings</span></div><div class="line">	result = <span class="keyword">this</span>.methodsCondition.compareTo(other.getMethodsCondition(), request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	result = <span class="keyword">this</span>.customConditionHolder.compareTo(other.customConditionHolder, request);</div><div class="line">	<span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="暗坑"><a href="#暗坑" class="headerlink" title="暗坑"></a>暗坑</h3><p>上面寻址逻辑里的第四点，若有大于1的匹配结果，且前两个匹配结果相等，则抛异常。<br>什么样的的情况会导致相等，mapping一致时，compare结果会相等。正常情况，不会配置两个一样的mapping，起服务检查时会报错，但有一个情况，mapping配置不一致，但可能出现compare相等。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@RequestMapping</span>(<span class="string">"/hello/&#123;a&#125;/"</span>)</div><div class="line"><span class="meta">@ResponseBody</span></div><div class="line"><span class="function">String <span class="title">test1</span><span class="params">()</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> <span class="string">"/hello/&#123;a&#125;/"</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="meta">@RequestMapping</span>(<span class="string">"/hello/&#123;a&#125;"</span>)</div><div class="line"><span class="meta">@ResponseBody</span></div><div class="line"><span class="function">String <span class="title">test5</span><span class="params">()</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> <span class="string">"/hello/&#123;a&#125;"</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>上述情况，mapping不一致，服务能正常启动<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">请求地址：</div><div class="line">  /hello/a   匹配结果   /hello/&#123;a&#125;/</div><div class="line">  /hello/a/  报错</div></pre></td></tr></table></figure></p>
-<p>报错结果：同时匹配到了test1(),test5()</p>
-<h4 id="暗坑原因"><a href="#暗坑原因" class="headerlink" title="暗坑原因"></a>暗坑原因</h4><p>为什么 /hello/a 正确匹配到了test1，而/hello/a/却匹配到了两个，且compare相等。<br>首先，/hello/a/ 通过 AntPathMatcher 能匹配到两个Mapping是合理的,这个可以自测一下<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">requestPath=<span class="string">"/usr/a"</span>;<span class="comment">//请求路径</span></div><div class="line">System.out.println(<span class="string">"请求地址："</span>+requestPath);</div><div class="line">patternPath=<span class="string">"/usr/a"</span>;<span class="comment">//路径匹配模式</span></div><div class="line">System.out.println(<span class="string">"/usr/a   ==》"</span> +matcher.match(patternPath, requestPath));</div><div class="line"></div><div class="line">patternPath=<span class="string">"/usr/a/"</span>;<span class="comment">//路径匹配模式</span></div><div class="line">System.out.println(<span class="string">"/usr/a/   ==》"</span> +matcher.match(patternPath, requestPath));</div></pre></td></tr></table></figure></p>
-<p>运行结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">请求地址：/usr/a</div><div class="line">/usr/a   ==》true</div><div class="line">/usr/a/   ==》false</div></pre></td></tr></table></figure></p>
-<p>所以匹配两个合理，问题是为什么会compare相等<br>debug大法好。在PatternsRequestCondition的527行找到了罪魁祸首<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>.useTrailingSlashMatch) &#123;</div><div class="line">	<span class="keyword">if</span> (!pattern.endsWith(<span class="string">"/"</span>) &amp;&amp; <span class="keyword">this</span>.pathMatcher.match(pattern + <span class="string">"/"</span>, lookupPath)) &#123;</div><div class="line">		<span class="keyword">return</span> pattern +<span class="string">"/"</span>;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>嗯，这玩意儿把所有mapping，后缀没有“/”的，全给补上了<br>所以，这两个Match基本上就是一样了</p>
-<p>不清楚这个处理方式是好是坏，反正要避开坑的最佳方式就是，所有mapping，最后全部都不要加“/”<br>这样请求地址不管带不带“/”都能正常访问</p>
-<p>参考资料<br><a href="http://jinnianshilongnian.iteye.com/blog/1684403" target="_blank" rel="external">http://jinnianshilongnian.iteye.com/blog/1684403</a></p>
-
-          
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/08/01/spring/SpringMVC Mapping寻址逻辑及暗坑/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -776,151 +750,6 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/06/04/framework/Spring多数据源配置/" itemprop="url">
-                  Spring多数据源配置（未完成）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-04T00:00:00+08:00">
-                2017-06-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/framework/" itemprop="url" rel="index">
-                    <span itemprop="name">framework</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>  项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。<br>之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：<br>1、自定义一个DataSource，Map<string,javax.sql.datasource>存放所有数据源<br>2、重写getConnection(),根据key值从map中获取DataSource，并返回连接<br>3、定义一个上下文DataRouteContext 利用ThreadLocal<string> 存储当前线程当前需要获取的数据源key值<br>4、自定义一个注解@DataSource(“key”)<br>5、自定义一个Aspect，拦截所有实现@DataSource注解的方法，将key值set到DataSourceContext</string></string,javax.sql.datasource></p>
-<p>问题：如何把数据源key标记还原</p>
-<pre><code>public abstract class AbstractRoutingDataSource extends AbstractDataSource implements InitializingBean
-</code></pre>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/随笔/马克吐槽/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1025,6 +854,151 @@
 <p>补充更新：【Chrome DNS解析错误 问题解决方案】<br>修改了云解析后，我的safari,firfox都能正常访问博客，虽然速度慢了点。但chrome一直访问不成功，直接跳转到www.zhanglong.wiki/pc.html，报【DNS解析错误】。后来发现，是chrome缓存一些解析，清空缓存就好了。<br>或者：<br>地址栏敲入：chrome://net-internals/#dns<br>点击 clean host cache</p>
 <p>chrome版本：58.0.3029.110 (64-bit)</p>
 
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/06/04/framework/Spring多数据源配置/" itemprop="url">
+                  Spring多数据源配置（未完成）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-04T00:00:00+08:00">
+                2017-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/framework/" itemprop="url" rel="index">
+                    <span itemprop="name">framework</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>  项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。<br>之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：<br>1、自定义一个DataSource，Map<string,javax.sql.datasource>存放所有数据源<br>2、重写getConnection(),根据key值从map中获取DataSource，并返回连接<br>3、定义一个上下文DataRouteContext 利用ThreadLocal<string> 存储当前线程当前需要获取的数据源key值<br>4、自定义一个注解@DataSource(“key”)<br>5、自定义一个Aspect，拦截所有实现@DataSource注解的方法，将key值set到DataSourceContext</string></string,javax.sql.datasource></p>
+<p>问题：如何把数据源key标记还原</p>
+<pre><code>public abstract class AbstractRoutingDataSource extends AbstractDataSource implements InitializingBean
+</code></pre>
           
         
       

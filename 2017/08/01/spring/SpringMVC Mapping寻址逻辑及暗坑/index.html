@@ -97,7 +97,7 @@
 <meta property="og:url" content="http://zhanglong.wiki/2017/08/01/spring/SpringMVC Mapping寻址逻辑及暗坑/index.html">
 <meta property="og:site_name" content="阿拉丁的混乱笔记">
 <meta property="og:description" content="最近有个项目需要一个类似于SpringMvc 的URL路径映射逻辑，根据请求URL，寻找匹配的Mapping，只是这边并不是真实的Mapping，而是自定义的数据库存储记录。要求支持模板模式和Ant风格。如：  12345678请求地址：     /hello/world数据库存储记录：    /&amp;#123;a&amp;#125;/&amp;#123;b&amp;#125;    /hello/&amp;#123;b&amp;#12">
-<meta property="og:updated_time" content="2017-08-01T16:18:24.000Z">
+<meta property="og:updated_time" content="2017-08-01T16:20:49.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SpringMVC Mapping寻址逻辑及暗坑">
 <meta name="twitter:description" content="最近有个项目需要一个类似于SpringMvc 的URL路径映射逻辑，根据请求URL，寻找匹配的Mapping，只是这边并不是真实的Mapping，而是自定义的数据库存储记录。要求支持模板模式和Ant风格。如：  12345678请求地址：     /hello/world数据库存储记录：    /&amp;#123;a&amp;#125;/&amp;#123;b&amp;#125;    /hello/&amp;#123;b&amp;#12">
@@ -414,6 +414,7 @@
         <p>  最近有个项目需要一个类似于SpringMvc 的URL路径映射逻辑，根据请求URL，寻找匹配的Mapping，只是这边并不是真实的Mapping，而是自定义的数据库存储记录。要求支持模板模式和Ant风格。<br>如：<br>  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">请求地址： </div><div class="line">    /hello/world</div><div class="line"></div><div class="line">数据库存储记录：</div><div class="line">    /&#123;a&#125;/&#123;b&#125;</div><div class="line">    /hello/&#123;b&#125;</div><div class="line">    /hello/world</div><div class="line">    ……</div></pre></td></tr></table></figure></p>
 <p>希望跟真实springMvc请求一样，获取到最佳匹配记录，张开涛的博客里称之为“最长匹配优先”。</p>
 <p>既然和SpringMvc一致，那就借鉴一下啦，现将借鉴结果记录一下：</p>
+<a id="more"></a>
 <h3 id="SpringMvc-Mapping寻址流程"><a href="#SpringMvc-Mapping寻址流程" class="headerlink" title="SpringMvc Mapping寻址流程"></a>SpringMvc Mapping寻址流程</h3><ol>
 <li><p>将URL与所有Mapping集合，遍历匹配[匹配逻辑则是我需要找的匹配方式]</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">AbstractHandlerMethodMapping  <span class="number">382</span><span class="function">h</span></div><div class="line"></div><div class="line">	<span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addMatchingMappings</span><span class="params">(Collection&lt;T&gt; mappings, List&lt;Match&gt; matches, HttpServletRequest request)</span> &#123;</div><div class="line">		<span class="keyword">for</span> (T mapping : mappings) &#123;</div><div class="line">			T match = getMatchingMapping(mapping, request);</div><div class="line">			<span class="keyword">if</span> (match != <span class="keyword">null</span>) &#123;</div><div class="line">				matches.add(<span class="keyword">new</span> Match(match, <span class="keyword">this</span>.mappingRegistry.getMappings().get(mapping)));</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
