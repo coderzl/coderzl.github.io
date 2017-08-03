@@ -4,6 +4,56 @@
 
     
   <url>
+    <loc>http://zhanglong.wiki/2017/08/03/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE(2)/</loc>
+    <lastmod>2017-08-03T16:39:20.000Z</lastmod>
+    <data>
+        <display>
+        <title>Spring多数据源配置(2)[BUG修复]</title>
+        <pubTime>2017-08-02T16:00:00.000Z</pubTime>
+        
+        <tag>Mysql</tag>
+         
+        <tag>Sequence</tag>
+         
+        <tag>多数据库</tag>
+         
+        <tag>分页插件</tag>
+         
+        <tag>多数据源</tag>
+         
+         
+           
+             
+              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/</loc>
+    <lastmod>2017-08-03T16:39:19.000Z</lastmod>
+    <data>
+        <display>
+        <title>Spring多数据源配置（未完成）</title>
+        <pubTime>2017-06-03T16:00:00.000Z</pubTime>
+        
+        <tag>数据源</tag>
+         
+        <tag>Spring</tag>
+         
+         
+           
+             
+              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://zhanglong.wiki/2017/08/01/spring/SpringMVC%20Mapping%E5%AF%BB%E5%9D%80%E9%80%BB%E8%BE%91%E5%8F%8A%E6%9A%97%E5%9D%91/</loc>
     <lastmod>2017-08-01T16:32:12.000Z</lastmod>
     <data>
@@ -62,28 +112,6 @@
         <tag>Mysql</tag>
          
         <tag>Sequence</tag>
-         
-         
-           
-             
-              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
-    <loc>http://zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/</loc>
-    <lastmod>2017-06-12T14:15:47.000Z</lastmod>
-    <data>
-        <display>
-        <title>Spring多数据源配置（未完成）</title>
-        <pubTime>2017-06-03T16:00:00.000Z</pubTime>
-        
-        <tag>数据源</tag>
-         
-        <tag>Spring</tag>
          
          
            

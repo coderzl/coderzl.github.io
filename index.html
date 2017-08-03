@@ -185,7 +185,7 @@
       </a>
     </div>
       
-        <p class="site-subtitle">编的好费力!</p>
+        <p class="site-subtitle">不要总想搞点大新闻，所有问题都是自己想偏了……</p>
       
   </div>
 
@@ -297,6 +297,164 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/03/framework/Spring多数据源配置(2)/" itemprop="url">
+                  Spring多数据源配置(2)[BUG修复]
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-03T00:00:00+08:00">
+                2017-08-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/framework/" itemprop="url" rel="index">
+                    <span itemprop="name">framework</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <pre><code>[Spring多数据源配置(1)](http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/).
+</code></pre><h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
+<p>  本着总想搞点大新闻的心态，开始了Debug之旅。</p>
+<p>  每次的坑，通常是我无意间挖的，这次也不例外。debug发现，一次操作，数据源被获取了两次。其中第一次是被分页插件PageHelper消耗了。看了下源码，是由于我干掉了一个配置。新项目这边有人说需要mysql、oracle多库同存的业务需求，我把PageHelper的方言配置，原本写死的 【dialect=mysql】给干掉了。</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div></pre></td><td class="code"><pre><div class="line">    <span class="comment">/**</span></div><div class="line">     * 设置属性值</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> p 属性值</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setProperties</span><span class="params">(Properties p)</span> </span>&#123;</div><div class="line">        <span class="comment">//MyBatis3.2.0版本校验</span></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            Class.forName(<span class="string">"org.apache.ibatis.scripting.xmltags.SqlNode"</span>);<span class="comment">//SqlNode是3.2.0之后新增的类</span></div><div class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException e) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"您使用的MyBatis版本太低，MyBatis分页插件PageHelper支持MyBatis3.2.0及以上版本!"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//数据库方言</span></div><div class="line">        String dialect = p.getProperty(<span class="string">"dialect"</span>);</div><div class="line">        <span class="keyword">if</span> (dialect == <span class="keyword">null</span> || dialect.length() == <span class="number">0</span>) &#123;</div><div class="line">            autoDialect = <span class="keyword">true</span>;</div><div class="line">            <span class="keyword">this</span>.properties = p;</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            autoDialect = <span class="keyword">false</span>;</div><div class="line">            sqlUtil = <span class="keyword">new</span> SqlUtil(dialect);</div><div class="line">            sqlUtil.setProperties(p);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">  ```   </div><div class="line">  加载时，判断没有设置方言，则 autoDialect = <span class="keyword">true</span></div><div class="line"></div><div class="line">  ```java</div><div class="line"><span class="comment">/**</span></div><div class="line">     * Mybatis拦截器方法</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> invocation 拦截器入参</div><div class="line">     * <span class="doctag">@return</span> 返回执行结果</div><div class="line">     * <span class="doctag">@throws</span> Throwable 抛出异常</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">intercept</span><span class="params">(Invocation invocation)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">        <span class="keyword">if</span> (autoDialect) &#123;</div><div class="line">            initSqlUtil(invocation);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> sqlUtil.processPage(invocation);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 初始化sqlUtil</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> invocation</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">initSqlUtil</span><span class="params">(Invocation invocation)</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (sqlUtil == <span class="keyword">null</span>) &#123;</div><div class="line">            String url = <span class="keyword">null</span>;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                MappedStatement ms = (MappedStatement) invocation.getArgs()[<span class="number">0</span>];</div><div class="line">                MetaObject msObject = SystemMetaObject.forObject(ms);</div><div class="line">                DataSource dataSource = (DataSource) msObject.getValue(<span class="string">"configuration.environment.dataSource"</span>);</div><div class="line">                url = dataSource.getConnection().getMetaData().getURL();</div><div class="line">            &#125; <span class="keyword">catch</span> (SQLException e) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"分页插件初始化异常:"</span> + e.getMessage());</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> (url == <span class="keyword">null</span> || url.length() == <span class="number">0</span>) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"无法自动获取jdbcUrl，请在分页插件中配置dialect参数!"</span>);</div><div class="line">            &#125;</div><div class="line">            String dialect = Dialect.fromJdbcUrl(url);</div><div class="line">            <span class="keyword">if</span> (dialect == <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"无法自动获取数据库类型，请通过dialect参数指定!"</span>);</div><div class="line">            &#125;</div><div class="line">            sqlUtil = <span class="keyword">new</span> SqlUtil(dialect);</div><div class="line">            sqlUtil.setProperties(properties);</div><div class="line">            properties = <span class="keyword">null</span>;</div><div class="line">            autoDialect = <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>  没有意外，然后就需要获取数据库连接，根据url判断方言。</p>
+<p>  回到前面的问题，为什么多获取了一次数据库连接，就导致后面数据源不正常，就得看第一版代码的坑爹之处:<br>  标记存上下文：<br>  <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DataRouteContext</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> ThreadLocal&lt;Deque&lt;String&gt;&gt; route = <span class="keyword">new</span> ThreadLocal&lt;&gt;();</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getRoute</span><span class="params">()</span></span>&#123;</div><div class="line">    Deque&lt;String&gt; deque = route.get();</div><div class="line">    <span class="keyword">if</span> (deque == <span class="keyword">null</span> || deque.size() == <span class="number">0</span>) &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> deque.pop();</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>Aspect：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Aspect</span></div><div class="line"><span class="meta">@Component</span></div><div class="line"><span class="meta">@Order</span>(<span class="number">1</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DataRouteAspect</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="comment">//    @Around("execution(public * *(..)) &amp;&amp; @annotation(dataRoute))")</span></div><div class="line">    <span class="meta">@Around</span>(<span class="string">"@annotation(dataRoute)"</span>)</div><div class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">setRouteName</span><span class="params">(ProceedingJoinPoint jp, DataRoute dataRoute)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">        String routeKey = dataRoute.value();</div><div class="line">        DataRouteLogger.info(<span class="string">"Aspect 数据路由设置为："</span>+routeKey);</div><div class="line">        <span class="keyword">if</span> (StringUtils.isNotBlank(routeKey)) &#123;</div><div class="line">            DataRouteContext.setRoute(routeKey);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> jp.proceed();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>获取数据源：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> Connection <span class="title">getConnection</span><span class="params">(String username, String password)</span> <span class="keyword">throws</span> SQLException </span>&#123;</div><div class="line">    DataSource ds = <span class="keyword">null</span>;</div><div class="line">    String routeName = DataRouteContext.getRoute();</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (routeName != <span class="keyword">null</span>) &#123;</div><div class="line">        DataRouteLogger.info(<span class="string">"dataSource changed , current dataSource is:"</span>+routeName);</div><div class="line">        ds = sourceMap.get(routeName);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        DataRouteLogger.info(<span class="string">"current dataSource is:defaultSource"</span>);</div><div class="line">        ds = <span class="keyword">this</span>.defaultSource;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (ds == <span class="keyword">null</span>)&#123;</div><div class="line">        DataRouteLogger.error(<span class="string">"dataSource is:"</span> + routeName + <span class="string">" not found"</span>);</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"dataSource is: "</span> + routeName + <span class="string">"not found"</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span>(username == <span class="keyword">null</span> || password == <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">return</span> ds.getConnection();</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> ds.getConnection(username, password);</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>AOP将在需要切换数据源的方法前，往线程上下文队列里放一个数据源名称，然后获取数据源时，会根据上下文队列里取到的数据源名称，切换不同的数据源，取不到，则为默认数据源。<br>标记存放方式是队列，取是用pop(),返回并移除,存一次用一次，之前分页插件配置了方言，所以不会中间获取一次数据源，一切正常。当我删除了方言配置，中间获取了一次，就导致消耗掉了一次标记，到了正式使用的时候，就再拿不到对应数据源。</p>
+<p>为什么之后又正常，那是因为分页插件，加载了一次方言后，就不再加载。所以之后获取数据源就正常了。</p>
+<h3 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h3><p>要解决上面的问题，就需要解决数据源标记丢失的问题，所以修改了上下文队列获取标记的方法，将pop()改成peek()。返回数据，不移除。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DataRouteContext</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> ThreadLocal&lt;Deque&lt;String&gt;&gt; route = <span class="keyword">new</span> ThreadLocal&lt;&gt;();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getRoute</span><span class="params">()</span></span>&#123;</div><div class="line">        Deque&lt;String&gt; deque = route.get();</div><div class="line">        <span class="keyword">if</span> (deque == <span class="keyword">null</span> || deque.size() == <span class="number">0</span>) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> deque.peek();</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<p>然后修改了AOP逻辑,增加了reset动作<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Aspect</span></div><div class="line"><span class="meta">@Component</span></div><div class="line"><span class="meta">@Order</span>(<span class="number">1</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DataRouteAspect</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="comment">//    @Around("execution(public * *(..)) &amp;&amp; @annotation(dataRoute))")</span></div><div class="line">    <span class="meta">@Around</span>(<span class="string">"@annotation(dataRoute)"</span>)</div><div class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">setRouteName</span><span class="params">(ProceedingJoinPoint jp, DataRoute dataRoute)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">        String routeKey = dataRoute.value();</div><div class="line">        DataRouteLogger.info(<span class="string">"Aspect 数据路由设置为："</span>+routeKey);</div><div class="line">        <span class="keyword">if</span> (StringUtils.isNotBlank(routeKey)) &#123;</div><div class="line">            DataRouteContext.setRoute(routeKey);</div><div class="line">        &#125;</div><div class="line">        Object result = jp.proceed();</div><div class="line">        DataRouteContext.reset();</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>至此，之前的BUG就解决了。</p>
+<h3 id="另一个问题"><a href="#另一个问题" class="headerlink" title="另一个问题"></a>另一个问题</h3><p>分页插件多数据源配置，还需要新增一个参数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">autoRuntimeDialect=true</div></pre></td></tr></table></figure></p>
+<h3 id="OVER"><a href="#OVER" class="headerlink" title="OVER"></a>OVER</h3><p>写完2，发现自己第一篇还没写完，几个月了。。。明天补齐！</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -1626,156 +1784,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/01/12/jdk/红黑树详解及代码/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/01/12/jdk/红黑树详解及代码/" itemprop="url">
-                  红黑树详解及代码(待更新)
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-12T00:00:00+08:00">
-                2017-01-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JDK源码笔记/" itemprop="url" rel="index">
-                    <span itemprop="name">JDK源码笔记</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="R-B-Tree简介"><a href="#R-B-Tree简介" class="headerlink" title="R-B Tree简介"></a>R-B Tree简介</h3><p>R-B Tree，全称是Red-Black Tree，又称为“红黑树”，它一种特殊的二叉查找树。红黑树的每个节点上都有存储位表示节点的颜色，可以是红(Red)或黑(Black)。</p>
-<h4 id="红黑树的特性"><a href="#红黑树的特性" class="headerlink" title="红黑树的特性:"></a>红黑树的特性:</h4><font color="red"><br>（1）每个节点或者是黑色，或者是红色。<br><br>（2）根节点是黑色。<br><br>（3）每个叶子节点（NIL）是黑色。 [注意：这里叶子节点，是指为空(NIL或NULL)的叶子节点！]<br><br>（4）如果一个节点是红色的，则它的子节点必须是黑色的。<br><br>（5）从一个节点到该节点的子孙节点的所有路径上包含相同数目的黑节点。<br></font>
-
-<p>注意：<br>(01) 特性(3)中的叶子节点，是只为空(NIL或null)的节点。<br><br>(02) 特性(5)，确保没有一条路径会比其他路径长出俩倍。因而，红黑树是相对是接近平衡的二叉树。<br></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/01/12/jdk/红黑树详解及代码/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1825,7 +1833,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1847,7 +1855,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
