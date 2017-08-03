@@ -93,13 +93,13 @@
 <meta name="description" content="项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：1、自定义一个DataSource，Map存放所有数据源2、重写getConnection(),根据key值从map中获取DataSource，并返回连接3、定义一个上下文DataRouteCon">
 <meta name="keywords" content="数据源,Spring">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Spring多数据源配置（未完成）">
+<meta property="og:title" content="Spring多数据源配置">
 <meta property="og:url" content="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/index.html">
 <meta property="og:site_name" content="阿拉丁的混乱笔记">
 <meta property="og:description" content="项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：1、自定义一个DataSource，Map存放所有数据源2、重写getConnection(),根据key值从map中获取DataSource，并返回连接3、定义一个上下文DataRouteCon">
-<meta property="og:updated_time" content="2017-08-03T17:06:00.000Z">
+<meta property="og:updated_time" content="2017-08-03T17:09:22.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Spring多数据源配置（未完成）">
+<meta name="twitter:title" content="Spring多数据源配置">
 <meta name="twitter:description" content="项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：1、自定义一个DataSource，Map存放所有数据源2、重写getConnection(),根据key值从map中获取DataSource，并返回连接3、定义一个上下文DataRouteCon">
 
 
@@ -134,7 +134,7 @@
 
 
 
-  <title> Spring多数据源配置（未完成） | 阿拉丁的混乱笔记 </title>
+  <title> Spring多数据源配置 | 阿拉丁的混乱笔记 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -328,7 +328,7 @@
             
             
               
-                Spring多数据源配置（未完成）
+                Spring多数据源配置
               
             
           </h1>
@@ -419,7 +419,7 @@
 <h4 id="路由注解"><a href="#路由注解" class="headerlink" title="路由注解"></a>路由注解</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Target</span>(&#123; TYPE, METHOD &#125;)</div><div class="line"><span class="meta">@Retention</span>(RUNTIME)</div><div class="line"><span class="keyword">public</span> <span class="meta">@interface</span> DataRoute &#123;</div><div class="line">    <span class="function">String <span class="title">value</span><span class="params">()</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="Aspect"><a href="#Aspect" class="headerlink" title="Aspect"></a>Aspect</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Aspect</span></div><div class="line"><span class="meta">@Component</span></div><div class="line"><span class="meta">@Order</span>(<span class="number">1</span>)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DataRouteAspect</span> </span>&#123;</div><div class="line"></div><div class="line"><span class="comment">//    @Around("execution(public * *(..)) &amp;&amp; @annotation(dataRoute))")</span></div><div class="line">    <span class="meta">@Around</span>(<span class="string">"@annotation(dataRoute)"</span>)</div><div class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">setRouteName</span><span class="params">(ProceedingJoinPoint jp, DataRoute dataRoute)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">        String routeKey = dataRoute.value();</div><div class="line">        DataRouteLogger.info(<span class="string">"Aspect 数据路由设置为："</span>+routeKey);</div><div class="line">        <span class="keyword">if</span> (StringUtils.isNotBlank(routeKey)) &#123;</div><div class="line">            DataRouteContext.setRoute(routeKey);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> jp.proceed();;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h4><p>在需要切换数据源的方法上，配置路由注解<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@DataRoute</span>(<span class="string">"configDataSource"</span>)</div><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> User <span class="title">selectUser</span><span class="params">(String userId)</span> </span>&#123;</div><div class="line">    <span class="comment">//数据库操作</span></div><div class="line">    User user = userDAO.selectUserById(userId);</div><div class="line">    <span class="keyword">return</span> user;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<h3 id="小坑"><a href="#小坑" class="headerlink" title="小坑"></a>小坑</h3><p>上述代码特定情况有小坑，需要稍作改动。移步：<br><a href="http://www.zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2" target="_blank" rel="external">Spring多数据源配置(2)Bug修复</a>/)</p>
+<h3 id="小坑"><a href="#小坑" class="headerlink" title="小坑"></a>小坑</h3><p>上述代码特定情况有小坑，需要稍作改动。移步：<br>[Spring多数据源配置(2)Bug修复]<a href="http://www.zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2)/" target="_blank" rel="external">http://www.zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2)/</a></p>
 
       
     </div>
@@ -448,7 +448,7 @@
     </li>
     <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/" title="Spring多数据源配置（未完成）">http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/</a>
+      <a href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/" title="Spring多数据源配置">http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/</a>
     </li>
     <li class="post-copyright-license">
       <strong>版权声明： </strong>
