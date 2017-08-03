@@ -406,7 +406,7 @@
       
         
           
-            <pre><code>[Spring多数据源配置(1)](http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/).
+            <pre><code>[Spring多数据源配置(1)](http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/)
 </code></pre><h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
 <p>  本着总想搞点大新闻的心态，开始了Debug之旅。</p>
 <p>  每次的坑，通常是我无意间挖的，这次也不例外。debug发现，一次操作，数据源被获取了两次。其中第一次是被分页插件PageHelper消耗了。看了下源码，是由于我干掉了一个配置。新项目这边有人说需要mysql、oracle多库同存的业务需求，我把PageHelper的方言配置，原本写死的 【dialect=mysql】给干掉了。</p>
