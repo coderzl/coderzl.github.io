@@ -3,6 +3,28 @@
 
 
     
+  <url>
+    <loc>http://zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/</loc>
+    <lastmod>2017-08-03T17:06:00.000Z</lastmod>
+    <data>
+        <display>
+        <title>Spring多数据源配置（未完成）</title>
+        <pubTime>2017-06-03T16:00:00.000Z</pubTime>
+        
+        <tag>数据源</tag>
+         
+        <tag>Spring</tag>
+         
+         
+           
+             
+              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
     
   <url>
     <loc>http://zhanglong.wiki/2017/08/03/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE(2)/</loc>
@@ -21,28 +43,6 @@
         <tag>分页插件</tag>
          
         <tag>多数据源</tag>
-         
-         
-           
-             
-              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
-    <loc>http://zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/</loc>
-    <lastmod>2017-08-03T16:39:19.000Z</lastmod>
-    <data>
-        <display>
-        <title>Spring多数据源配置（未完成）</title>
-        <pubTime>2017-06-03T16:00:00.000Z</pubTime>
-        
-        <tag>数据源</tag>
-         
-        <tag>Spring</tag>
          
          
            

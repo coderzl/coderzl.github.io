@@ -1152,12 +1152,15 @@
 
       
         
-          
-            <p>  项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。<br>之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：<br>1、自定义一个DataSource，Map<string,javax.sql.datasource>存放所有数据源<br>2、重写getConnection(),根据key值从map中获取DataSource，并返回连接<br>3、定义一个上下文DataRouteContext 利用ThreadLocal<string> 存储当前线程当前需要获取的数据源key值<br>4、自定义一个注解@DataSource(“key”)<br>5、自定义一个Aspect，拦截所有实现@DataSource注解的方法，将key值set到DataSourceContext</string></string,javax.sql.datasource></p>
+          <p>  项目团队最近需要更换框架，临时搭建一套组合框架。小项目，两个数据库：业务库，配置库。根据实际业务，动态切换。<br>之前对这块配置处理没有什么了解，看了一些资料以及以前框架的实现，了解了下思路，做个笔记整理：<br>1、自定义一个DataSource，Map<String,javax.sql.DataSource>存放所有数据源<br>2、重写getConnection(),根据key值从map中获取DataSource，并返回连接<br>3、定义一个上下文DataRouteContext 利用ThreadLocal<String> 存储当前线程当前需要获取的数据源key值<br>4、自定义一个注解@DataSource(“key”)<br>5、自定义一个Aspect，拦截所有实现@DataSource注解的方法，将key值set到DataSourceContext</String></String,javax.sql.DataSource></p>
 <p>问题：如何把数据源key标记还原</p>
-<pre><code>public abstract class AbstractRoutingDataSource extends AbstractDataSource implements InitializingBean
-</code></pre>
-          
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/06/04/framework/Spring多数据源配置/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
