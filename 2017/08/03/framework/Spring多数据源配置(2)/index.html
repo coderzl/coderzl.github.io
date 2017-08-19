@@ -90,17 +90,17 @@
 
 
 
-<meta name="description" content="[Spring多数据源配置(1)]&amp;lt;http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/&amp;gt; BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混">
+<meta name="description" content="Spring 多数据源配置(1) BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。   本着总想搞点大新闻的心态，开始了Debug之旅。">
 <meta name="keywords" content="Mysql,Sequence,多数据库,分页插件,多数据源">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring多数据源配置(2)[BUG修复]">
 <meta property="og:url" content="http://zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2)/index.html">
 <meta property="og:site_name" content="阿拉丁的混乱笔记">
-<meta property="og:description" content="[Spring多数据源配置(1)]&amp;lt;http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/&amp;gt; BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混">
-<meta property="og:updated_time" content="2017-08-03T17:12:22.000Z">
+<meta property="og:description" content="Spring 多数据源配置(1) BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。   本着总想搞点大新闻的心态，开始了Debug之旅。">
+<meta property="og:updated_time" content="2017-08-19T16:32:25.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Spring多数据源配置(2)[BUG修复]">
-<meta name="twitter:description" content="[Spring多数据源配置(1)]&amp;lt;http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/&amp;gt; BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混">
+<meta name="twitter:description" content="Spring 多数据源配置(1) BUG  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。   本着总想搞点大新闻的心态，开始了Debug之旅。">
 
 
 
@@ -411,8 +411,8 @@
       
 
       
-        <pre><code>[Spring多数据源配置(1)]&lt;http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/&gt;
-</code></pre><h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
+        <p><a href="http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/" target="_blank" rel="external">Spring 多数据源配置(1)</a></p>
+<h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
 <p>  本着总想搞点大新闻的心态，开始了Debug之旅。</p>
 <a id="more"></a>
 <p>  每次的坑，通常是我无意间挖的，这次也不例外。debug发现，一次操作，数据源被获取了两次。其中第一次是被分页插件PageHelper消耗了。看了下源码，是由于我干掉了一个配置。新项目这边有人说需要mysql、oracle多库同存的业务需求，我把PageHelper的方言配置，原本写死的 【dialect=mysql】给干掉了。</p>
@@ -492,6 +492,10 @@
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/15/framework/自定义Maven Archetype/" rel="next" title="自定义Maven Archetype">
+                <i class="fa fa-chevron-left"></i> 自定义Maven Archetype
+              </a>
             
           </div>
 
@@ -575,7 +579,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -597,7 +601,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

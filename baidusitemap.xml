@@ -5,7 +5,7 @@
     
   <url>
     <loc>http://zhanglong.wiki/2017/08/03/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE(2)/</loc>
-    <lastmod>2017-08-03T17:12:22.000Z</lastmod>
+    <lastmod>2017-08-19T16:32:25.000Z</lastmod>
     <data>
         <display>
         <title>Spring多数据源配置(2)[BUG修复]</title>
@@ -20,6 +20,30 @@
         <tag>分页插件</tag>
          
         <tag>多数据源</tag>
+         
+         
+           
+             
+              <breadCrumb title="framework" url="http://zhanglong.wiki/categories/framework/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://zhanglong.wiki/2017/08/15/framework/%E8%87%AA%E5%AE%9A%E4%B9%89Maven%20Archetype/</loc>
+    <lastmod>2017-08-15T03:18:00.000Z</lastmod>
+    <data>
+        <display>
+        <title>自定义Maven Archetype</title>
+        <pubTime>2017-08-14T16:00:00.000Z</pubTime>
+        
+        <tag>Maven</tag>
+         
+        <tag>Archetype</tag>
+         
+        <tag>Idea</tag>
          
          
            

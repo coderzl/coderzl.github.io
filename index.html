@@ -307,6 +307,153 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/08/15/framework/自定义Maven Archetype/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/15/framework/自定义Maven Archetype/" itemprop="url">
+                  自定义Maven Archetype
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-15T00:00:00+08:00">
+                2017-08-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/framework/" itemprop="url" rel="index">
+                    <span itemprop="name">framework</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>新增maven项目,pom里新增插件</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&lt;build&gt;</div><div class="line">    &lt;plugins&gt;</div><div class="line">      &lt;plugin&gt;</div><div class="line">        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</div><div class="line">        &lt;artifactId&gt;maven-archetype-plugin&lt;/artifactId&gt;</div><div class="line">        &lt;version&gt;2.2&lt;/version&gt;</div><div class="line">      &lt;/plugin&gt;</div><div class="line">    &lt;/plugins&gt;</div><div class="line">  &lt;/build&gt;</div></pre></td></tr></table></figure>
+<p>install</p>
+<p>archetype:create-from-project</p>
+<p>/target/generated-sources/archetype deploy</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/08/03/framework/Spring多数据源配置(2)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -405,8 +552,8 @@
 
       
         
-          <pre><code>[Spring多数据源配置(1)]&lt;http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/&gt;
-</code></pre><h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
+          <p><a href="http://www.zhanglong.wiki/2017/06/04/framework/Spring%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE/">Spring 多数据源配置(1)</a></p>
+<h3 id="BUG"><a href="#BUG" class="headerlink" title="BUG"></a>BUG</h3><p>  基于前一篇文章关于Sping多数据源实现，已经被我运用到实际项目中。但最近开始出现一些问题，服务刚启动，能看到数据源切换混乱的场景。由于项目中设计，服务启动会去从库查一些配置项数据，需要切换数据源，但经常数据查询失败，发现跑到主库去了，但随后又正常。</p>
 <p>  本着总想搞点大新闻的心态，开始了Debug之旅。</p>
           <!--noindex-->
           <div class="post-button text-center">
@@ -899,6 +1046,152 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/随笔/马克吐槽/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ZhangLong">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="阿拉丁的混乱笔记">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/06/04/随笔/马克吐槽/" itemprop="url">
+                  马克吐槽
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-04T00:00:00+08:00">
+                2017-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/随笔/" itemprop="url" rel="index">
+                    <span itemprop="name">随笔</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body han-init-context" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>前阵子开始，coding的免费用户开始有广告了，而且基本上照顾到站点的每个访问者，必然会见到一次/天。</p>
+<p>博客一开始是放在了GitHub pages上了，但后来考虑到无法被百度收录，就添加了coding作为国内仓库。双仓库同步提交，云解析把默认请求解析到coding，海外请求解析到了GitHub。博客是靠三分钟的激情搭建起来的，然后开始偶尔把为知笔记上的笔记，转到博客上。晒网已久。。。上次看到广告，就琢磨着干掉coding的解析，结果随后一直没有写博客，也就不了了之……今天再次被广告恶心到，直接上云解析删掉了两个coding解析。</p>
+<p>自家网络访问GitHub的速度比coding响应速度慢50-60ms，也算是可以接受了。。。毕竟博客也只是为了逼迫自己整理那混乱不堪的笔记。</p>
+<p>继续撸代码，并努力再整理几篇笔记来装点一下这博客……</p>
+<p>补充更新：【Chrome DNS解析错误 问题解决方案】<br>修改了云解析后，我的safari,firfox都能正常访问博客，虽然速度慢了点。但chrome一直访问不成功，直接跳转到www.zhanglong.wiki/pc.html，报【DNS解析错误】。后来发现，是chrome缓存一些解析，清空缓存就好了。<br>或者：<br>地址栏敲入：chrome://net-internals/#dns<br>点击 clean host cache</p>
+<p>chrome版本：58.0.3029.110 (64-bit)</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/framework/Spring多数据源配置/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1047,152 +1340,6 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/06/04/随笔/马克吐槽/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/06/04/随笔/马克吐槽/" itemprop="url">
-                  马克吐槽
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-04T00:00:00+08:00">
-                2017-06-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/随笔/" itemprop="url" rel="index">
-                    <span itemprop="name">随笔</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>前阵子开始，coding的免费用户开始有广告了，而且基本上照顾到站点的每个访问者，必然会见到一次/天。</p>
-<p>博客一开始是放在了GitHub pages上了，但后来考虑到无法被百度收录，就添加了coding作为国内仓库。双仓库同步提交，云解析把默认请求解析到coding，海外请求解析到了GitHub。博客是靠三分钟的激情搭建起来的，然后开始偶尔把为知笔记上的笔记，转到博客上。晒网已久。。。上次看到广告，就琢磨着干掉coding的解析，结果随后一直没有写博客，也就不了了之……今天再次被广告恶心到，直接上云解析删掉了两个coding解析。</p>
-<p>自家网络访问GitHub的速度比coding响应速度慢50-60ms，也算是可以接受了。。。毕竟博客也只是为了逼迫自己整理那混乱不堪的笔记。</p>
-<p>继续撸代码，并努力再整理几篇笔记来装点一下这博客……</p>
-<p>补充更新：【Chrome DNS解析错误 问题解决方案】<br>修改了云解析后，我的safari,firfox都能正常访问博客，虽然速度慢了点。但chrome一直访问不成功，直接跳转到www.zhanglong.wiki/pc.html，报【DNS解析错误】。后来发现，是chrome缓存一些解析，清空缓存就好了。<br>或者：<br>地址栏敲入：chrome://net-internals/#dns<br>点击 clean host cache</p>
-<p>chrome版本：58.0.3029.110 (64-bit)</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/05/10/分布式锁/Redis分布式锁/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1297,154 +1444,6 @@
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2017/05/10/分布式锁/Redis分布式锁/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="ZhangLong">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="阿拉丁的混乱笔记">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
-                  hexo主题配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
-                2017-04-16
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/hexo/" itemprop="url" rel="index">
-                    <span itemprop="name">hexo</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body han-init-context" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
-<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1639,7 +1638,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/03/12/数据库/mysql加锁分析/">
+    <link itemprop="mainEntityOfPage" href="http://zhanglong.wiki/2017/04/16/hexo主题配置/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="ZhangLong">
@@ -1661,8 +1660,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/03/12/数据库/mysql加锁分析/" itemprop="url">
-                  mysql加锁分析
+                <a class="post-title-link" href="/2017/04/16/hexo主题配置/" itemprop="url">
+                  hexo主题配置
                 </a>
               
             
@@ -1678,8 +1677,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-03-12T00:00:00+08:00">
-                2017-03-12
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-16T00:00:00+08:00">
+                2017-04-16
               </time>
             
 
@@ -1701,8 +1700,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/数据库/" itemprop="url" rel="index">
-                    <span itemprop="name">数据库</span>
+                  <a href="/categories/hexo/" itemprop="url" rel="index">
+                    <span itemprop="name">hexo</span>
                   </a>
                 </span>
 
@@ -1737,11 +1736,11 @@
 
       
         
-          <p>原文地址：<a href="http://hedengcheng.com/?p=771">http://hedengcheng.com/?p=771</a></p>
-<p>待有时间把笔记丢上来。<br></p>
+          <p>选择hexo很重要的一个原因就是它丰富的主题，而配置主题的流程也很简单：<br>1、clone主题到本地<br>2、修改_config.yml配置<br>3、重新生成静态页面、发布</p>
+<h4 id="下载主题"><a href="#下载主题" class="headerlink" title="下载主题"></a>下载主题</h4><p>hexo<a href="https://hexo.io">官网</a>有很多丰富的主题，选择一个，进入到它的GitHub页面<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> yourBlogdir/themes</div><div class="line">$ git <span class="built_in">clone</span> xxx.git</div></pre></td></tr></table></figure></p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/03/12/数据库/mysql加锁分析/#more" rel="contents">
+            <a class="btn" href="/2017/04/16/hexo主题配置/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1827,7 +1826,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1849,7 +1848,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
