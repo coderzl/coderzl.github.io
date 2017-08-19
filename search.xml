@@ -5,7 +5,7 @@
     <entry>
       <title><![CDATA[自定义Maven Archetype]]></title>
       <url>%2F2017%2F08%2F15%2Fframework%2F%E8%87%AA%E5%AE%9A%E4%B9%89Maven%20Archetype%2F</url>
-      <content type="text"><![CDATA[新增maven项目,pom里新增插件 123456789&lt;build&gt; &lt;plugins&gt; &lt;plugin&gt; &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt; &lt;artifactId&gt;maven-archetype-plugin&lt;/artifactId&gt; &lt;version&gt;2.2&lt;/version&gt; &lt;/plugin&gt; &lt;/plugins&gt; &lt;/build&gt; install archetype:create-from-project /target/generated-sources/archetype deploy]]></content>
+      <content type="text"><![CDATA[新增maven项目,pom里新增插件 123456789&lt;build&gt; &lt;plugins&gt; &lt;plugin&gt; &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt; &lt;artifactId&gt;maven-archetype-plugin&lt;/artifactId&gt; &lt;version&gt;2.2&lt;/version&gt; &lt;/plugin&gt; &lt;/plugins&gt; &lt;/build&gt; 有空来写]]></content>
     </entry>
 
     
